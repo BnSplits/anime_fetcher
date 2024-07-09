@@ -1,5 +1,4 @@
 #!/usr/bin/bash
-#!/bin/bash
 
 # Demander à l'utilisateur quel gestionnaire de paquets il utilise
 echo "Quel gestionnaire de paquets utilisez-vous ? (apt, dnf, pacman)"
