@@ -22,7 +22,8 @@ install_with_dnf() {
 install_with_pacman() {
     # sudo pacman -S --noconfirm aria2 nodejs npm jq
     # sudo npm install -g puppeteer
-    sudo pacman -S --noconfirm aria2 python-selenium
+    sudo pacman -S --noconfirm aria2
+    yay -S python-selenium
 }
 
 # Installer les paquets en fonction du gestionnaire de paquets
