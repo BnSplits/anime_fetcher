@@ -20,7 +20,7 @@ install_with_dnf() {
 
 # Fonction pour installer les paquets avec pacman
 install_with_pacman() {
-    sudo pacman -Syu --noconfirm aria2 nodejs npm jq
+    sudo pacman -S --noconfirm aria2 nodejs npm jq
     sudo npm install -g puppeteer
 }
 
@@ -47,7 +47,7 @@ echo "Installation terminée."
 node script.js
 
 # Lire les informations de l'anime depuis le fichier temporaire
-anime_info=$(jq -r '.animeTitle, .animeSeason' temp_anime_info.json)
+anime_info=$(jq -r '.animeTitle, .animeSeason' ./source/temp_anime_info.json)
 anime_title=$(echo "$anime_info" | sed -n '1p')
 anime_season=$(echo "$anime_info" | sed -n '2p')
 
@@ -55,13 +55,13 @@ anime_season=$(echo "$anime_info" | sed -n '2p')
 mkdir -p "$HOME/Anime/$anime_title/$anime_season"
 
 # Télécharger les liens dans $HOME/Anime/$anime_title/$anime_season
-links=$(jq -r '.[]' links.json)
+links=$(jq -r '.[]' ./source/links.json)
 for lien in $links; do
     aria2c -x 16 -d "$HOME/Anime/$anime_title/$anime_season" "$lien"
 done
 
 # Nettoyer le contenu de links.json et temp_anime_info.json sans les supprimer
-echo "[]" > links.json
-echo "{}" > temp_anime_info.json
+echo "[]" > ./source/links.json
+echo "{}" > ./source/temp_anime_info.json
 
 echo "Téléchargements terminés et fichiers temporaires nettoyés."

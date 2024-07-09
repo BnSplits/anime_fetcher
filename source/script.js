@@ -97,18 +97,18 @@ async function fetchMediaLinks(animeName, episodeNumbers) {
 
     // Écriture des liens dans links.json
     let data = [];
-    if (fs.existsSync('links.json')) {
-        data = JSON.parse(fs.readFileSync('links.json'));
+    if (fs.existsSync('./source/links.json')) {
+        data = JSON.parse(fs.readFileSync('./source/links.json'));
     }
     data = data.concat(links);
-    fs.writeFileSync('links.json', JSON.stringify(data, null, 2));
+    fs.writeFileSync('./source/links.json', JSON.stringify(data, null, 2));
 
     // Écrire les informations de l'anime dans un fichier temporaire
     const tempData = {
         animeTitle: animeTitle.replace(/\s+/g, '_'),
         animeSeason: animeSeason.replace(/\s+/g, '_')
     };
-    fs.writeFileSync('temp_anime_info.json', JSON.stringify(tempData, null, 2));
+    fs.writeFileSync('./source/temp_anime_info.json', JSON.stringify(tempData, null, 2));
 
     return true;
 }
