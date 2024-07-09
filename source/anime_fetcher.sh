@@ -45,11 +45,11 @@ esac
 
 echo "Installation terminée."
 
-# # Exécuter le fichier script.js avec Node.js
-# node script.js
+# Exécuter le fichier script.js avec Node.js
+node script.js
 
-# Exécuter le fichier main.py avec python
-python main.py
+# # Exécuter le fichier main.py avec python
+# python main.py
 
 # Lire les informations de l'anime depuis le fichier temporaire
 anime_info=$(jq -r '.animeTitle, .animeSeason' ./temp_anime_info.json)
