@@ -6,24 +6,24 @@ read package_manager
 
 # Fonction pour installer les paquets avec apt
 install_with_apt() {
-    # sudo apt install -y aria2 nodejs npm jq
-    # sudo npm install -g puppeteer
-    sudo apt install -y aria2 python-selenium
+    sudo apt install -y aria2 nodejs npm jq
+    sudo npm install -g puppeteer
+    # sudo apt install -y aria2 python-selenium
 }
 
 # Fonction pour installer les paquets avec dnf
 install_with_dnf() {
-    # sudo dnf install -y aria2 nodejs npm jq
-    # sudo npm install -g puppeteer
-    sudo dnf install -y aria2 python-selenium
+    sudo dnf install -y aria2 nodejs npm jq
+    sudo npm install -g puppeteer
+    # sudo dnf install -y aria2 python-selenium
 }
 
 # Fonction pour installer les paquets avec pacman
 install_with_pacman() {
-    # sudo pacman -S --noconfirm aria2 nodejs npm jq
-    # sudo npm install -g puppeteer
-    sudo pacman -S --noconfirm aria2
-    yay -S python-selenium
+    sudo pacman -S --noconfirm aria2 nodejs npm jq
+    sudo npm install -g puppeteer
+    # sudo pacman -S --noconfirm aria2
+    # yay -S python-selenium
 }
 
 # Installer les paquets en fonction du gestionnaire de paquets
