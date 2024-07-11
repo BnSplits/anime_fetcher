@@ -10,15 +10,11 @@ Anime Downloader est un script automatisé pour télécharger des épisodes d'an
 - Node.js et npm
 - Un gestionnaire de paquets (apt, dnf, ou pacman)
 
-## Installation
-  launch.sh
-
-## Utilisation
-
-Exécutez le script `anime_fetcher.sh` :
-
+## Installation et utilisation
 ```sh
-./anime_fetcher.sh
+  launch.sh
+```
+
 ```
 
 ### Explications du script
