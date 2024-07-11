@@ -40,11 +40,4 @@ Assurez-vous que les fichiers `links.json` et `info.json` sont présents dans le
 
 ## Contributeurs
 
-- BananaSplit
-
-## License
-
-Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus d'informations.
-```
-
-N'hésite pas à remplacer `<URL_du_dépôt>` et `<nom_du_dépôt>` par les informations appropriées de ton projet.
+- @BnSplits
