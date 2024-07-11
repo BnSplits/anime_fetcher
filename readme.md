@@ -1,5 +1,3 @@
-Voici un fichier `README.md` généré pour ton projet `anime_downloader` :
-
 ```markdown
 # Anime Downloader by BananaSplit v1.0
 
