@@ -13,6 +13,7 @@ Anime Downloader est un script automatisé pour télécharger des épisodes d'an
 ## Installation
 
 1. Clonez ce dépôt :
+```
 
 ```sh
 git clone https://github.com/BnSplits/anime_fetcher.git
