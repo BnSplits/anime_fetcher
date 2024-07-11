@@ -38,7 +38,7 @@ case $package_manager in
         install_with_dnf
     ;;
     pacman)
-        # install_with_pacman
+        install_with_pacman
     ;;
     *)
         echo "Gestionnaire de paquets non supporté. Veuillez choisir entre apt, dnf, et pacman."
