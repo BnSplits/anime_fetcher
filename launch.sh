@@ -1,5 +1,5 @@
 #!/usr/bin/bash
 clear
 git clone https://github.com/BnSplits/anime_fetcher.git
-cd ./source
+cd source
 ./anime_fetcher.sh
