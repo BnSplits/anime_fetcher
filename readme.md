@@ -1,5 +1,5 @@
 ```markdown
-# Anime Downloader by BananaSplit v1.0
+# Anime Downloader by BananaSplit
 
 Anime Downloader est un script automatisé pour télécharger des épisodes d'anime en utilisant Puppeteer pour extraire les liens de streaming et Aria2 pour gérer les téléchargements.
 

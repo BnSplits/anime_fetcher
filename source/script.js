@@ -1,14 +1,6 @@
 const puppeteer = require("puppeteer");
 const readlineSync = require("readline-sync");
 const fs = require("fs");
-const { Console } = require("console");
-
-// Fonction d'attente
-function delay(time) {
-  return new Promise(function (resolve) {
-    setTimeout(resolve, time);
-  });
-}
 
 // Fonction pour poser une question à l'utilisateur et attendre la réponse
 function askQuestion(query) {
@@ -26,6 +18,9 @@ let download_links = [];
 let sibnet_redirected_links = [];
 let sendvid_redirected_links = [];
 
+// Utilisation ou non de la vf
+let useVf = false;
+
 // Fonction principale auto-executrice
 (async () => {
   const name = askQuestion("Entrez le nom de l'anime : ")
@@ -37,7 +32,7 @@ let sendvid_redirected_links = [];
   const page = await browser.newPage();
 
   // Modifie le timeout maximum de la page (en millisecondes)
-  page.setDefaultNavigationTimeout(60000)
+  page.setDefaultNavigationTimeout(60000);
 
   const url = `https://anime-sama.fr/catalogue/${name}/`;
   await page.goto(url, { waitUntil: "networkidle0" });
@@ -52,7 +47,7 @@ let sendvid_redirected_links = [];
 
   // Element html de la liste des saisons et films
   const isDangerous = askQuestion(
-    `Ce contenu est-il +18 ? (o/n)\n=>Vous pouvez vérifier sur le site ${url} : `
+    `Ce contenu est-il +18 ? (o/n)\n=> Vous pouvez vérifier sur le site ${url} : `
   );
   let seasonMenu;
   if (isDangerous.toLowerCase() === "o") {
@@ -104,6 +99,29 @@ let sendvid_redirected_links = [];
     await page.goto(availableSeasonsLinks[selectedSeason - 1], {
       waitUntil: "networkidle0",
     });
+  }
+
+  // Demande de choisir entre VF et VOSTFR si la VF est disponible
+  let isVfAvailable = await page.$eval("#switchVF", (el) =>
+    el.checkVisibility()
+  );
+  if (isVfAvailable) {
+    useVf =
+      askQuestion(
+        "La version VF est disponible ! Voulez-vous la sélectionner ? (o/n) : "
+      ) === "o"
+        ? true
+        : false;
+  }
+
+  // Redirige vers la page de la VF
+  if (useVf) {
+    await page.goto(
+      availableSeasonsLinks[selectedSeason - 1].replace("vostfr", "vf"),
+      {
+        waitUntil: "networkidle0",
+      }
+    );
   }
 
   // Récupération des informations nécessaires (titre, saison, lecteurs disponibles, épisodes disponibles, nombre d'épisodes,)
@@ -171,15 +189,28 @@ let sendvid_redirected_links = [];
       }
     }
   }
+
   // Affichage des liens et épisode copiés
-  console.log("Sibnet: ");
-  for (let link of sibnet_redirected_links) {
-    console.log(`${link}`);
+  if (sibnet_redirected_links.length === 0) {
+    console.log("Serveur Sibnet : aucun lien !");
+    console.log("\n");
+  } else {
+    console.log("Serveur Sibnet: ");
+    for (let link of sibnet_redirected_links) {
+      console.log(`${link}`);
+    }
+    console.log("\n");
   }
-  console.log("\n");
-  console.log("Sendvid: ");
-  for (let link of sendvid_redirected_links) {
-    console.log(`${link}`);
+
+  if (sendvid_redirected_links.length === 0) {
+    console.log("Serveur Sendvid : aucun lien !");
+    console.log("\n");
+  } else {
+    console.log("Serveur Sendvid: ");
+    for (let link of sendvid_redirected_links) {
+      console.log(`${link}`);
+    }
+    console.log("\n");
   }
 
   // Redirection et copie des liens de téléchargement (Sibnet)
@@ -214,7 +245,7 @@ let sendvid_redirected_links = [];
       await page.goto(link[1], { waitUntil: "networkidle0" });
 
       // Active le preload de la video
-      await page.$eval("#video_html5_wrapper_html5_api", (el) =>
+      await page.$eval("#video-js-video_html5_api", (el) =>
         el.setAttribute("preload", true)
       );
 
@@ -240,6 +271,7 @@ let sendvid_redirected_links = [];
   const animeInfo = {
     animeTitle: animeTitle,
     animeSeason: animeSeason,
+    lang: useVf ? "VF" : "VOSTFR",
   };
   fs.writeFileSync("info.json", JSON.stringify(animeInfo, null, 2));
 

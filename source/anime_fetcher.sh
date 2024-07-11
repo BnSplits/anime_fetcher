@@ -5,7 +5,8 @@ echo "[]" > links.json
 echo "{}" > info.json
 
 # Introduction
-echo "### Anime downloader by BananaSplit v1.0 ###"
+echo "### Anime downloader by BananaSplit ###"
+echo " "
 
 # Demander à l'utilisateur quel gestionnaire de paquets il utilise
 printf "=> Quel gestionnaire de paquets utilisez-vous ? (apt, dnf, pacman) : "
@@ -55,9 +56,10 @@ node script.js
 anime_info=$(jq -r '.animeTitle, .animeSeason' info.json)
 anime_title=$(echo "$anime_info" | sed -n '1p')
 anime_season=$(echo "$anime_info" | sed -n '2p')
+lang=$(echo "$anime_info" | sed -n '3p')
 
 # Créer le repertoire de téléchargement
-mkdir -p "$HOME/Anime/$anime_title/$anime_season"
+mkdir -p "$HOME/Anime/$anime_title/$anime_season/$lang"
 
 # Lire les noms et les liens depuis links.json
 links=$(jq -r '.[] | @base64' links.json)
