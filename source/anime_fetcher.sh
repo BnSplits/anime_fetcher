@@ -11,7 +11,7 @@ echo "--- Utilisation du site https://anime-sama.fr ---"
 echo " "
 
 # Demander à l'utilisateur quel gestionnaire de paquets il utilise
-printf "=> Quel gestionnaire de paquets utilisez-vous ? (apt, dnf, pacman) : "
+printf "=> Quel gestionnaire de paquets utilisez-vous ? (dnf, pacman) : "
 read package_manager
 
 # Fonction pour installer les paquets avec apt
@@ -34,9 +34,9 @@ install_with_pacman() {
 
 # Installer les paquets en fonction du gestionnaire de paquets
 case $package_manager in
-    apt)
-        install_with_apt
-    ;;
+    # apt)
+    #     install_with_apt
+    # ;;
     dnf)
         install_with_dnf
     ;;
