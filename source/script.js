@@ -1,150 +1,248 @@
-const puppeteer = require('puppeteer');
-const readlineSync = require('readline-sync');
-const fs = require('fs');
+const puppeteer = require("puppeteer");
+const readlineSync = require("readline-sync");
+const fs = require("fs");
+const { Console } = require("console");
+
+// Fonction d'attente
+function delay(time) {
+  return new Promise(function (resolve) {
+    setTimeout(resolve, time);
+  });
+}
 
 // Fonction pour poser une question à l'utilisateur et attendre la réponse
-async function askQuestion(query) {
-    return readlineSync.question(query);
+function askQuestion(query) {
+  return readlineSync.question(`=> ${query}`);
 }
 
-// Fonction pour formater le nom de l'animé : minuscule et remplacer les espaces par des tirets
-async function formatAnimeName(name) {
-    return name.toLowerCase().replace(/\s+/g, '-');
-}
+// Déclaration du titre et de la saison
+let animeTitle = "";
+let animeSeason = "";
 
-// Fonction principale
-async function fetchMediaLinks(animeName, episodeNumbers) {
-    // Lancement de Puppeteer et ouverture d'une nouvelle page
-    const browser = await puppeteer.launch({ headless: false });
-    const page = await browser.newPage();
-    const formattedName = await formatAnimeName(animeName);
-    const url = `https://anime-sama.fr/catalogue/${formattedName}/`;
+// List des liens de téléchargement
+let download_links = [];
 
-    await page.goto(url, { waitUntil: 'domcontentloaded' });
+// List des liens de redirection
+let sibnet_redirected_links = [];
+let sendvid_redirected_links = [];
 
-    // Vérification si la page existe en regardant le titre de la page
-    const title = await page.title();
-    const exists = title !== 'Accès Introuvable';
-
-    if (!exists) {
-        console.log(`Le lien ${url} n'existe pas.`);
-        await browser.close();
-        return false;
-    }
-
-    // Demande la saison ou le film
-    const availableSeasons = await page.$eval("#sousBlocMilieu > div.mx-3.md\\:mx-10 > div:nth-child(11)", list => list.firstChild.remove())
-    console.log(`Voici les saisons et films disponibles : `)
-    for(let season of availableSeasons) {
-        console.log(`-> ${season.lastChild.textContent} \n`)
-    }
-    let selectedSeason = Number(askQuestion("Choisissez votre saison/film (ex: 1, 2, 3) "))
-    if (selectedSeason < 1 || selectedSeason > availableSeasons.children.length) {
-        console.log("Saison/film choisi hors du champ des possibilités! \n Sélection de la saison 1!")
-        selectedSeason = 1
-    }
-
-    // Se rend à la page de la saison ou du film sélectionné
-    await page.goto(availableSeasons.children[selectedSeason - 1].href, { waitUntil: 'domcontentloaded' });
-
-    // Demande de choisir entre VF et VOSTFR s'ils sont disponible
-
-    // Récupération des informations nécessaires (titre, saison, nombre d'épisodes)
-    const animeTitle = await page.$eval("#titreOeuvre", el => el.textContent);
-    const animeSeason = await page.$eval("#avOeuvre", el => el.textContent);
-    const episodeCount = await page.$$eval("#selectEpisodes > option", options => options.length);
-
-    console.log(`Titre: ${animeTitle}`);
-    console.log(`Saison: ${animeSeason}`);
-    console.log(`Nombre d'épisodes: ${episodeCount}`);
-
-    let links = [];
-
-    // Boucle sur chaque épisode spécifié par l'utilisateur
-    for (let ep of episodeNumbers) {
-        // Sélectionne l'épisode dans le menu déroulant
-        await page.select("#selectEpisodes", ep.toString());
-        let found = false;
-        const readerOptions = await page.$$eval("#selectLecteurs > option", options => options.map(option => option.value));
-
-        // Boucle sur chaque option de lecteur pour trouver "sibnet"
-        for (let reader of readerOptions) {
-            await page.select("#selectLecteurs", reader);
-            await page.waitForTimeout(1000);
-
-            const src = await page.$eval("#playerDF", el => el.getAttribute("src"));
-            if (src.includes("sibnet")) {
-                // Cliquez sur le bouton de lecture
-                await page.click("#video_html5_wrapper > div.vjs-big-play-button");
-                const response = await page.waitForResponse(response => 
-                    response.request().resourceType() === 'media' && response.status() === 206
-                );
-
-                // Récupération du lien du média
-                const mediaLink = response.url();
-                console.log(`Lien média trouvé pour l'épisode ${ep}: ${mediaLink}`);
-                links.push(mediaLink);
-                found = true;
-                break;
-            }
-        }
-
-        if (!found) {
-            console.log(`Aucun lecteur "sibnet" trouvé pour l'épisode ${ep}.`);
-        }
-    }
-    await browser.close();
-
-    // Écriture des liens dans links.json
-    let data = [];
-    if (fs.existsSync('./source/links.json')) {
-        data = JSON.parse(fs.readFileSync('./source/links.json'));
-    }
-    data = data.concat(links);
-    fs.writeFileSync('./source/links.json', JSON.stringify(data, null, 2));
-
-    // Écrire les informations de l'anime dans un fichier temporaire
-    const tempData = {
-        animeTitle: animeTitle.replace(/\s+/g, '_'),
-        animeSeason: animeSeason.replace(/\s+/g, '_')
-    };
-    fs.writeFileSync('./source/temp_anime_info.json', JSON.stringify(tempData, null, 2));
-
-    return true;
-}
-
+// Fonction principale auto-executrice
 (async () => {
-    let success = false;
+  const name = askQuestion("Entrez le nom de l'anime : ")
+    .toLowerCase()
+    .replace(/\s+/g, "-");
 
-    // Boucle jusqu'à ce que l'utilisateur entre un nom d'animé valide (page existante)
-    while (!success) {
-        const animeName = askQuestion("Entrez le nom de l'animé : ");
-        const episodesInput = askQuestion("Entrez les épisodes (ex: 1, 5, 8 ou 1-6 ou A pour tous) : ");
-        let episodeNumbers = [];
+  // Lancement de Puppeteer et ouverture d'une nouvelle page
+  const browser = await puppeteer.launch({ headless: true });
+  const page = await browser.newPage();
 
-        if (episodesInput.toLowerCase() === 'a') {
-            // Si l'utilisateur choisit 'A', ajoute tous les épisodes
-            episodeNumbers = Array.from({ length: episodeCount }, (_, i) => i + 1);
-        } else {
-            // Divise l'entrée par les virgules et supprime les espaces
-            const parts = episodesInput.split(',').map(part => part.trim());
-            for (let part of parts) {
-                if (part.includes('-')) {
-                    // Si l'entrée contient un tiret, traite-la comme une plage d'épisodes
-                    const [start, end] = part.split('-').map(Number);  // Divise la plage et convertit en nombres
-                    for (let i = start; i <= end; i++) {
-                        episodeNumbers.push(i);  // Ajoute chaque numéro d'épisode dans la plage
-                    }
-                } else {
-                    // Si l'entrée est un seul numéro d'épisode, convertit et ajoute
-                    episodeNumbers.push(Number(part));
-                }
-            }
+  // Modifie le timeout maximum de la page (en millisecondes)
+  page.setDefaultNavigationTimeout(60000)
+
+  const url = `https://anime-sama.fr/catalogue/${name}/`;
+  await page.goto(url, { waitUntil: "networkidle0" });
+
+  // Vérification si la page existe en regardant le titre de la page
+  const title = await page.title();
+  const exists = title !== "Accès Introuvable";
+  if (!exists) {
+    console.log(`Le nom de l'animé est incorrect !`);
+    await browser.close();
+  }
+
+  // Element html de la liste des saisons et films
+  const isDangerous = askQuestion(
+    `Ce contenu est-il +18 ? (o/n)\n=>Vous pouvez vérifier sur le site ${url} : `
+  );
+  let seasonMenu;
+  if (isDangerous.toLowerCase() === "o") {
+    seasonMenu = "#sousBlocMilieu > div.mx-3 > div:nth-child(13)";
+  } else {
+    seasonMenu = "#sousBlocMilieu > div.mx-3 > div:nth-child(11)";
+  }
+
+  // Recupere le nombre de saisons et films
+  let availableSeasonsLength = await page.$eval(
+    seasonMenu,
+    (el) => el.children.length - 1
+  );
+
+  // Crée la liste des saisons et films
+  let availableSeasonsName = [];
+  let availableSeasonsLinks = [];
+  for (let i = 2; i < availableSeasonsLength + 2; i++) {
+    let ep = i.toString();
+    availableSeasonsName.push(
+      await page.$eval(
+        `${seasonMenu} > a:nth-child(${ep}) > div`,
+        (el) => el.textContent
+      )
+    );
+    availableSeasonsLinks.push(
+      await page.$eval(`${seasonMenu} > a:nth-child(${ep})`, (el) => el.href)
+    );
+  }
+
+  // Affiche les saisons et films displonible
+  console.log(`\n Voici les saisons et films disponibles :`);
+  for (let seasonName of availableSeasonsName) {
+    console.log(
+      `-> ${seasonName} : (${availableSeasonsName.indexOf(seasonName) + 1})`
+    );
+  }
+  console.log(`\n`);
+
+  // Choisir la saison ou le film
+  let selectedSeason = Number(
+    askQuestion("Veuillez choisir la saison / le film (ex: 1, 2, 3, 4) : ")
+  );
+  if (selectedSeason < 1 || selectedSeason > availableSeasonsLength) {
+    console.log("Selection de la Saison 1 (choix par défaut)");
+    selectedSeason = 1;
+    await page.goto(availableSeasonsLinks[0], { waitUntil: "networkidle0" });
+  } else {
+    await page.goto(availableSeasonsLinks[selectedSeason - 1], {
+      waitUntil: "networkidle0",
+    });
+  }
+
+  // Récupération des informations nécessaires (titre, saison, lecteurs disponibles, épisodes disponibles, nombre d'épisodes,)
+  animeTitle = await page.$eval("#titreOeuvre", (el) => el.textContent);
+  animeSeason = await page.$eval("#avOeuvre", (el) => el.textContent);
+  const readerOptions = await page.$$eval(
+    "#selectLecteurs > option",
+    (options) => options.map((option) => option.value)
+  );
+  const episodeOptions = await page.$$eval(
+    "#selectEpisodes > option",
+    (options) => options.map((option) => option.value)
+  );
+  const episodeCount = await page.$$eval(
+    "#selectEpisodes > option",
+    (options) => options.length
+  );
+
+  // Affiche le nombre d'épisodes disponibles
+  console.log(`\n ${episodeCount} Episodes sont disponibles ! `);
+
+  // Choix des épisodes à télécharger
+  const episodesInput = askQuestion(
+    "Entrez les épisodes à télécharger (ex: 1, 5, 8 ou 1-6 ou A pour tous) : "
+  ).toString();
+
+  // Formattage des épisodes choisis
+  let episodeNumbers = [];
+  if (episodesInput.toLowerCase() === "a") {
+    /// Si l'utilisateur choisit 'A', ajoute tous les épisodes
+    episodeNumbers = Array.from({ length: episodeCount }, (_, i) => i + 1);
+  } else {
+    /// Divise l'entrée par les virgules et supprime les espaces
+    const parts = episodesInput.split(",").map((part) => part.trim());
+    for (let part of parts) {
+      if (part.includes("-")) {
+        // Si l'entrée contient un tiret, traite-la comme une plage d'épisodes
+        const [start, end] = part.split("-").map(Number); // Divise la plage et convertit en nombres
+        for (let i = start; i <= end; i++) {
+          episodeNumbers.push(i); // Ajoute chaque numéro d'épisode dans la plage
         }
-
-        // Tente de récupérer les liens des médias pour l'anime donné
-        success = await fetchMediaLinks(animeName, episodeNumbers);
+      } else {
+        /// Si l'entrée est un seul numéro d'épisode, convertit et ajoute
+        episodeNumbers.push(Number(part));
+      }
     }
+  }
 
-    readlineSync.close();
+  // Boucle pour chaque épisode
+  for (let ep of episodeNumbers) {
+    await page.select("#selectEpisodes", "Episode " + ep.toString());
+
+    /// Boucle sur chaque option de lecteur pour trouver "sibnet" ou "sendvid"
+    for (let reader of readerOptions) {
+      await page.select("#selectLecteurs", reader);
+      const src = await page.$eval("#playerDF", (el) => el.getAttribute("src"));
+
+      /// Si le lien est trouvé alors le rajouter à la liste des liens de redirection
+      if (src.includes("sibnet")) {
+        sibnet_redirected_links.push(["Episode " + ep.toString(), src]);
+        break;
+      } else if (src.includes("sendvid")) {
+        sendvid_redirected_links.push(["Episode " + ep.toString(), src]);
+        break;
+      }
+    }
+  }
+  // Affichage des liens et épisode copiés
+  console.log("Sibnet: ");
+  for (let link of sibnet_redirected_links) {
+    console.log(`${link}`);
+  }
+  console.log("\n");
+  console.log("Sendvid: ");
+  for (let link of sendvid_redirected_links) {
+    console.log(`${link}`);
+  }
+
+  // Redirection et copie des liens de téléchargement (Sibnet)
+  if (sibnet_redirected_links.length !== 0) {
+    for (let link of sibnet_redirected_links) {
+      await page.goto(link[1], { waitUntil: "networkidle0" });
+
+      // Active le preload de la video
+      await page.$eval("#video_html5_wrapper_html5_api", (el) =>
+        el.setAttribute("preload", true)
+      );
+
+      // Surveille les requetes réseau
+      const response = await page.waitForResponse(
+        (response) =>
+          response.request().resourceType() === "media" &&
+          response.status() === 206
+      );
+
+      // Récupération du lien du média
+      const mediaLink = response.url();
+      console.log(`Lien média trouvé pour l'${link[0]}: ${mediaLink}\n`);
+
+      /// Injection du lien de téléchargement et du nom de l'épisode
+      download_links.push([link[0], mediaLink]);
+    }
+  }
+
+  // Redirection et copie des liens de téléchargement (Sendvid)
+  if (sendvid_redirected_links.length !== 0) {
+    for (let link of sendvid_redirected_links) {
+      await page.goto(link[1], { waitUntil: "networkidle0" });
+
+      // Active le preload de la video
+      await page.$eval("#video_html5_wrapper_html5_api", (el) =>
+        el.setAttribute("preload", true)
+      );
+
+      // Surveille les requetes réseau
+      const response = await page.waitForResponse(
+        (response) =>
+          response.request().resourceType() === "media" &&
+          response.status() === 206
+      );
+
+      // Récupération du lien du média
+      const mediaLink = response.url();
+      console.log(`Lien média trouvé pour l'${link[0]}: ${mediaLink}\n`);
+
+      /// Injection du lien de téléchargement et du nom de l'épisode
+      download_links.push([link[0], mediaLink]);
+    }
+  }
+
+  // Ferme le navigateur
+  browser.close();
+
+  const animeInfo = {
+    animeTitle: animeTitle,
+    animeSeason: animeSeason,
+  };
+  fs.writeFileSync("info.json", JSON.stringify(animeInfo, null, 2));
+
+  // Ecrit tous les liens dans le fichier links.json
+  fs.writeFileSync("links.json", JSON.stringify(download_links, null, 2));
 })();
