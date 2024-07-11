@@ -1,5 +1,9 @@
 #!/usr/bin/bash
 clear
+# Nettoyer le contenu de links.json et temp_anime_info.json sans les supprimer
+echo "[]" > links.json
+echo "{}" > info.json
+
 # Introduction
 echo "### Anime downloader by BananaSplit v1.0 ###"
 
