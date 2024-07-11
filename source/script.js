@@ -191,6 +191,7 @@ let useVf = false;
   }
 
   // Affichage des liens et épisode copiés
+  console.log("\n");
   if (sibnet_redirected_links.length === 0) {
     console.log("Serveur Sibnet : aucun lien !");
     console.log("\n");

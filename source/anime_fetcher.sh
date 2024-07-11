@@ -7,6 +7,8 @@ echo "{}" > info.json
 # Introduction
 echo "### Anime downloader by BananaSplit ###"
 echo " "
+echo "--- Utilisation du site https://anime-sama.fr ---"
+echo " "
 
 # Demander à l'utilisateur quel gestionnaire de paquets il utilise
 printf "=> Quel gestionnaire de paquets utilisez-vous ? (apt, dnf, pacman) : "
@@ -53,7 +55,7 @@ echo "Installation terminée."
 node script.js
 
 # Lire les informations de l'anime depuis le fichier temporaire
-anime_info=$(jq -r '.animeTitle, .animeSeason' info.json)
+anime_info=$(jq -r '.animeTitle, .animeSeason, .lang' info.json)
 anime_title=$(echo "$anime_info" | sed -n '1p')
 anime_season=$(echo "$anime_info" | sed -n '2p')
 lang=$(echo "$anime_info" | sed -n '3p')
@@ -72,7 +74,7 @@ for item in $links; do
     }
     name=$(_jq '.[0]')
     link=$(_jq '.[1]')
-    aria2c -x 16 -d "$HOME/Anime/$anime_title/$anime_season" -o "$name" "$link"
+    aria2c -x 16 -d "$HOME/Anime/$anime_title/$anime_season/$lang" -o "$name" "$link"
 done
 
 # Nettoyer le contenu de links.json et temp_anime_info.json sans les supprimer
