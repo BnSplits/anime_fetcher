@@ -40,4 +40,4 @@ Assurez-vous que les fichiers `links.json` et `info.json` sont présents dans le
 
 ## Contributeurs
 
-- @BnSplits
+- BananaSplit (@BnSplits)
