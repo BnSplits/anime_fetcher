@@ -11,20 +11,7 @@ Anime Downloader est un script automatisé pour télécharger des épisodes d'an
 - Un gestionnaire de paquets (apt, dnf, ou pacman)
 
 ## Installation
-
-1. Clonez ce dépôt :
-```
-
-```sh
-git clone https://github.com/BnSplits/anime_fetcher.git
-cd source
-```
-
-2. Donnez la permission d'exécution au script `anime_fetcher.sh` :
-
-```sh
-chmod +x anime_fetcher.sh
-```
+  launch.sh
 
 ## Utilisation
 
