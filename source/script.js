@@ -126,6 +126,30 @@ let useVf = false;
 
   // Récupération des informations nécessaires (titre, saison, lecteurs disponibles, épisodes disponibles, nombre d'épisodes,)
   animeTitle = await page.$eval("#titreOeuvre", (el) => el.textContent);
+  animeTitle = (() => {
+    switch (animeTitle) {
+      case "Episode 1":
+        return "Episode 01";
+      case "Episode 2":
+        return "Episode 02";
+      case "Episode 3":
+        return "Episode 03";
+      case "Episode 4":
+        return "Episode 04";
+      case "Episode 5":
+        return "Episode 05";
+      case "Episode 6":
+        return "Episode 06";
+      case "Episode 7":
+        return "Episode 07";
+      case "Episode 8":
+        return "Episode 08";
+      case "Episode 9":
+        return "Episode 09";
+      default:
+        return animeTitle;
+    }
+  })();
   animeSeason = await page.$eval("#avOeuvre", (el) => el.textContent);
   const readerOptions = await page.$$eval(
     "#selectLecteurs > option",
