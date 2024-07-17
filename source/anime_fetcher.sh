@@ -74,7 +74,7 @@ for item in $links; do
     }
     name=$(_jq '.[0]')
     link=$(_jq '.[1]')
-    aria2c -x 16 -d "$HOME/Anime/$anime_title/$anime_season/$lang" -o "$name" "$link"
+    aria2c -x 16 -d "$HOME/Anime/$anime_title/$anime_season/$lang" -o "$name.mp4" "$link"
 done
 
 # Nettoyer le contenu de links.json et temp_anime_info.json sans les supprimer
