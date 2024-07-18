@@ -14,12 +14,6 @@ echo " "
 printf "=> Quel gestionnaire de paquets utilisez-vous ? (dnf, pacman) : "
 read package_manager
 
-# Fonction pour installer les paquets avec apt
-install_with_apt() {
-    sudo apt install -y aria2 nodejs npm jq
-    npm install puppeteer readline-sync
-}
-
 # Fonction pour installer les paquets avec dnf
 install_with_dnf() {
     sudo dnf install -y aria2 nodejs npm jq
@@ -34,9 +28,6 @@ install_with_pacman() {
 
 # Installer les paquets en fonction du gestionnaire de paquets
 case $package_manager in
-    # apt)
-    #     install_with_apt
-    # ;;
     dnf)
         install_with_dnf
     ;;
@@ -44,7 +35,7 @@ case $package_manager in
         install_with_pacman
     ;;
     *)
-        echo "Gestionnaire de paquets non supporté. Veuillez choisir entre apt, dnf, et pacman."
+        echo "Gestionnaire de paquets non supporté. Veuillez choisir entre dnf, et pacman."
         exit 1
     ;;
 esac
