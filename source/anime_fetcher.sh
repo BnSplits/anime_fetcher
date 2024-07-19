@@ -14,16 +14,18 @@ echo " "
 printf "=> Quel gestionnaire de paquets utilisez-vous ? (dnf, pacman) : "
 read package_manager
 
-# Fonction pour installer les paquets avec dnf
+# Fonction pour installer les paquets avec dnf sans les logs d'installation
 install_with_dnf() {
-    sudo dnf install -y aria2 nodejs npm jq
-    npm install puppeteer readline-sync
+    echo "Installation des dépendances..."
+    sudo dnf install -y aria2 nodejs npm jq > /dev/null 2>&1
+    npm install puppeteer readline-sync > /dev/null 2>&1
 }
 
-# Fonction pour installer les paquets avec pacman
+# Fonction pour installer les paquets avec pacman sans les logs d'installation
 install_with_pacman() {
-    sudo pacman -S --noconfirm aria2 nodejs npm jq
-    npm install puppeteer readline-sync
+    echo "Installation des dépendances..."
+    sudo pacman -S --noconfirm aria2 nodejs npm jq > /dev/null 2>&1
+    npm install puppeteer readline-sync > /dev/null 2>&1
 }
 
 # Installer les paquets en fonction du gestionnaire de paquets
@@ -35,12 +37,13 @@ case $package_manager in
         install_with_pacman
     ;;
     *)
-        echo "Gestionnaire de paquets non supporté. Veuillez choisir entre dnf, et pacman."
+        echo "Gestionnaire de paquets non supporté. Veuillez choisir entre dnf et pacman."
         exit 1
     ;;
 esac
 
 echo "Installation terminée."
+echo " "
 
 # Exécuter le fichier script.js avec Node.js
 node script.js
@@ -51,7 +54,7 @@ anime_title=$(echo "$anime_info" | sed -n '1p')
 anime_season=$(echo "$anime_info" | sed -n '2p')
 lang=$(echo "$anime_info" | sed -n '3p')
 
-# Créer le repertoire de téléchargement
+# Créer le répertoire de téléchargement
 mkdir -p "$HOME/Anime/$anime_title/$anime_season/$lang"
 
 # Lire les noms et les liens depuis links.json
@@ -59,13 +62,18 @@ links=$(jq -r '.[] | @base64' links.json)
 
 # Télécharger chaque lien en attribuant un nom spécifique au fichier téléchargé
 echo "Lancement des téléchargements !"
+echo " "
 for item in $links; do
     _jq() {
         echo "${item}" | base64 --decode | jq -r "${1}"
     }
     name=$(_jq '.[0]')
     link=$(_jq '.[1]')
-    aria2c -x 16 -d "$HOME/Anime/$anime_title/$anime_season/$lang" -o "$name.mp4" "$link"
+    echo "Téléchargement de l'$name... "
+    aria2c -x 16 -d "$HOME/Anime/$anime_title/$anime_season/$lang" -o "$name.mp4" "$link" > /dev/null 2>&1
+    echo "Téléchargement terminé!"
+    echo " "
+
 done
 
 # Nettoyer le contenu de links.json et temp_anime_info.json sans les supprimer
