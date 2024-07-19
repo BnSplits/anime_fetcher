@@ -237,7 +237,8 @@ async function main(page) {
 
       // Récupération du lien du média
       const mediaLink = response.url();
-      console.log(` -> Lien média trouvé pour l'${link[0]}: ${mediaLink}\n`);
+      console.log(` -> Lien média trouvé pour l'${link[0]}\n`);
+      // console.log(` -> Lien média trouvé pour l'${link[0]}: ${mediaLink}\n`);
 
       /// Injection du lien de téléchargement et du nom de l'épisode
       download_links.push([link[0], mediaLink]);
@@ -263,7 +264,8 @@ async function main(page) {
 
       // Récupération du lien du média
       const mediaLink = response.url();
-      console.log(` -> Lien média trouvé pour l'${link[0]}: ${mediaLink}\n`);
+      console.log(` -> Lien média trouvé pour l'${link[0]}\n`);
+      // console.log(` -> Lien média trouvé pour l'${link[0]}: ${mediaLink}\n`);
 
       /// Injection du lien de téléchargement et du nom de l'épisode
       download_links.push([link[0], mediaLink]);
