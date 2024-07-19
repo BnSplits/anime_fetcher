@@ -21,68 +21,48 @@ let sendvid_redirected_links = [];
 // Utilisation ou non de la vf
 let useVf = false;
 
-// Fonction principale auto-executrice
-(async () => {
-  const name = askQuestion("Entrez le nom de l'anime : ")
-    .toLowerCase()
-    .replace(/\s+/g, "-");
-
-  // Lancement de Puppeteer et ouverture d'une nouvelle page
-  const browser = await puppeteer.launch({ headless: true });
-  const page = await browser.newPage();
-
-  // Modifie le timeout maximum de la page (en millisecondes)
-  page.setDefaultNavigationTimeout(60000);
-
-  const url = `https://anime-sama.fr/catalogue/${name}/`;
-  await page.goto(url, { waitUntil: "networkidle0" });
-
-  // Vérification si la page existe en regardant le titre de la page
-  const title = await page.title();
-  const exists = title !== "Accès Introuvable";
-  if (!exists) {
-    console.log(`Le nom de l'animé est incorrect !`);
-    await browser.close();
-  }
-
-  // Element html de la liste des saisons et films
-  const isDangerous = askQuestion(
-    `Ce contenu est-il +18 ? (o/n)\n=> Vous pouvez vérifier sur le site ${url} : `
-  );
-  let seasonMenu;
-  if (isDangerous.toLowerCase() === "o") {
-    seasonMenu = "#sousBlocMilieu > div.mx-3 > div:nth-child(13)";
-  } else {
-    seasonMenu = "#sousBlocMilieu > div.mx-3 > div:nth-child(11)";
-  }
-
-  // Recupere le nombre de saisons et films
-  let availableSeasonsLength = await page.$eval(
-    seasonMenu,
-    (el) => el.children.length - 1
-  );
-
-  // Crée la liste des saisons et films
+// Fonction principale
+async function main(page) {
+  // Boucle qui va tester les possibilités du menu des saisons
+  let availableSeasonsLength;
   let availableSeasonsName = [];
   let availableSeasonsLinks = [];
-  for (let i = 2; i < availableSeasonsLength + 2; i++) {
-    let ep = i.toString();
-    availableSeasonsName.push(
-      await page.$eval(
-        `${seasonMenu} > a:nth-child(${ep}) > div`,
-        (el) => el.textContent
-      )
-    );
-    availableSeasonsLinks.push(
-      await page.$eval(`${seasonMenu} > a:nth-child(${ep})`, (el) => el.href)
-    );
+  for (let i = 11; i <= 13; i++) {
+    try {
+      let seasonMenu = `#sousBlocMilieu > div.mx-3 > div:nth-child(${i})`;
+      // Recupere le nombre de saisons et films
+      availableSeasonsLength = await page.$eval(
+        seasonMenu,
+        (el) => el.children.length - 1
+      );
+
+      // Crée la liste des saisons et films
+      for (let i = 2; i < availableSeasonsLength + 2; i++) {
+        let ep = i.toString();
+        availableSeasonsName.push(
+          await page.$eval(
+            `${seasonMenu} > a:nth-child(${ep}) > div`,
+            (el) => el.textContent
+          )
+        );
+        availableSeasonsLinks.push(
+          await page.$eval(
+            `${seasonMenu} > a:nth-child(${ep})`,
+            (el) => el.href
+          )
+        );
+      }
+      break;
+    } catch (err) {
+      continue;
+    }
   }
 
   // Affiche les saisons et films displonible
   console.log(`\n Voici les saisons et films disponibles :`);
   for (let seasonName of availableSeasonsName) {
     console.log(
-      `-> ${seasonName} : (${availableSeasonsName.indexOf(seasonName) + 1})`
+      ` -> [${availableSeasonsName.indexOf(seasonName) + 1}] ${seasonName}`
     );
   }
   console.log(`\n`);
@@ -222,7 +202,7 @@ let useVf = false;
   } else {
     console.log("Serveur Sibnet: ");
     for (let link of sibnet_redirected_links) {
-      console.log(`${link}`);
+      console.log(` -> ${link}`);
     }
     console.log("\n");
   }
@@ -233,7 +213,7 @@ let useVf = false;
   } else {
     console.log("Serveur Sendvid: ");
     for (let link of sendvid_redirected_links) {
-      console.log(`${link}`);
+      console.log(` -> ${link}`);
     }
     console.log("\n");
   }
@@ -257,7 +237,7 @@ let useVf = false;
 
       // Récupération du lien du média
       const mediaLink = response.url();
-      console.log(`Lien média trouvé pour l'${link[0]}: ${mediaLink}\n`);
+      console.log(` -> Lien média trouvé pour l'${link[0]}: ${mediaLink}\n`);
 
       /// Injection du lien de téléchargement et du nom de l'épisode
       download_links.push([link[0], mediaLink]);
@@ -283,15 +263,13 @@ let useVf = false;
 
       // Récupération du lien du média
       const mediaLink = response.url();
-      console.log(`Lien média trouvé pour l'${link[0]}: ${mediaLink}\n`);
+      console.log(` -> Lien média trouvé pour l'${link[0]}: ${mediaLink}\n`);
 
       /// Injection du lien de téléchargement et du nom de l'épisode
       download_links.push([link[0], mediaLink]);
     }
   }
 
-  // Ferme le navigateur
-  browser.close();
 
   const animeInfo = {
     animeTitle: animeTitle,
@@ -302,4 +280,47 @@ let useVf = false;
 
   // Ecrit tous les liens dans le fichier links.json
   fs.writeFileSync("links.json", JSON.stringify(download_links, null, 2));
+}
+
+// Fonction auto-executrice
+(async () => {
+  // Lancement de Puppeteer et ouverture d'une nouvelle page
+  const browser = await puppeteer.launch({ headless: true });
+  const page = await browser.newPage();
+
+  // Boucle jusqu'à trouver un animé recherché
+  let doSearch = true;
+  while (doSearch) {
+    try {
+      const name = askQuestion("Entrez le nom de l'anime : ")
+        .toLowerCase()
+        .replace(/\s+/g, "-");
+      console.log(" Recherche en cours...");
+
+      // Modifie le timeout maximum de la page (en millisecondes)
+      page.setDefaultNavigationTimeout(60000);
+
+      const url = `https://anime-sama.fr/catalogue/${name}/`;
+      await page.goto(url, { waitUntil: "networkidle0" });
+
+      // Vérification si la page existe en regardant le titre de la page
+      const title = await page.title();
+      const exists = title !== "Accès Introuvable";
+      if (!exists) {
+        console.log(`\nLe nom de l'animé est incorrect ! Veuillez réessayer. `);
+        continue
+      }
+      //Redéfinition de doSearch
+      doSearch = false;
+      await main(page);
+
+      // Fermeture du navigateur
+      browser.close()
+      break
+    } catch (err) {
+      console.log("Oops, une erreur est survenue : ");
+      console.error(err)
+      break
+    }
+  }
 })();
