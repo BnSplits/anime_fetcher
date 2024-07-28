@@ -6,7 +6,7 @@ const fs = require("fs");
 function askQuestion(query) {
   return readlineSync.question(`=> ${query}`);
 }
-
+ 
 // Déclaration du titre et de la saison
 let animeTitle = "";
 let animeSeason = "";
@@ -14,7 +14,7 @@ let animeSeason = "";
 // List des liens de téléchargement
 let download_links = [];
 
-// List des liens de redirection
+// List des liens de redirection 
 let sibnet_redirected_links = [];
 let sendvid_redirected_links = [];
 
@@ -285,6 +285,7 @@ async function main(page) {
 }
 
 // Fonction auto-executrice
+
 (async () => {
   // Lancement de Puppeteer et ouverture d'une nouvelle page
   const browser = await puppeteer.launch({ headless: true });
