@@ -197,10 +197,10 @@ async function main(page) {
   // Affichage des liens et épisode copiés
   console.log("\n");
   if (sibnet_redirected_links.length === 0) {
-    console.log("Serveur Sibnet : aucun lien !");
+    console.log("Serveur sibnet : aucun lien !");
     console.log("\n");
   } else {
-    console.log("Serveur Sibnet: ");
+    console.log("Serveur sibnet: ");
     for (let link of sibnet_redirected_links) {
       console.log(` -> ${link}`);
     }
@@ -218,7 +218,7 @@ async function main(page) {
     console.log("\n");
   }
 
-  // Redirection et copie des liens de téléchargement (Sibnet)
+  // Redirection et copie des liens de téléchargement (sibnet)
   if (sibnet_redirected_links.length !== 0) {
     for (let link of sibnet_redirected_links) {
       await page.goto(link[1], { waitUntil: "networkidle0" });
