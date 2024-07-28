@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 clear
-# Nettoyer le contenu de links.json et temp_anime_info.json sans les supprimer
+# Nettoyer le contenu de links.json et info.json sans les supprimer
 echo "[]" > links.json
 echo "{}" > info.json
 
@@ -17,15 +17,23 @@ read package_manager
 # Fonction pour installer les paquets avec dnf sans les logs d'installation
 install_with_dnf() {
     echo "Installation des dépendances..."
-    sudo dnf install -y aria2 nodejs npm jq > /dev/null 2>&1
-    npm install puppeteer readline-sync > /dev/null 2>&1
+    for pkg in aria2 nodejs npm jq; do
+        if ! rpm -q $pkg > /dev/null 2>&1; then
+            sudo dnf install -y $pkg > /dev/null 2>&1
+        fi
+    done
+    npm list puppeteer readline-sync > /dev/null 2>&1 || npm install puppeteer readline-sync > /dev/null 2>&1
 }
 
 # Fonction pour installer les paquets avec pacman sans les logs d'installation
 install_with_pacman() {
     echo "Installation des dépendances..."
-    sudo pacman -S --noconfirm aria2 nodejs npm jq > /dev/null 2>&1
-    npm install puppeteer readline-sync > /dev/null 2>&1
+    for pkg in aria2 nodejs npm jq; do
+        if ! pacman -Qi $pkg > /dev/null 2>&1; then
+            sudo pacman -S --noconfirm $pkg > /dev/null 2>&1
+        fi
+    done
+    npm list puppeteer readline-sync > /dev/null 2>&1 || npm install puppeteer readline-sync > /dev/null 2>&1
 }
 
 # Installer les paquets en fonction du gestionnaire de paquets
@@ -73,11 +81,11 @@ for item in $links; do
     aria2c -x 16 -d "$HOME/Anime/$anime_title/$anime_season/$lang" -o "$name.mp4" "$link" > /dev/null 2>&1
     echo "Téléchargement terminé!"
     echo " "
-
 done
 
-# Nettoyer le contenu de links.json et temp_anime_info.json sans les supprimer
+# Nettoyer le contenu de links.json et info.json sans les supprimer
 echo "[]" > links.json
 echo "{}" > info.json
 
 echo "Téléchargements terminés et fichiers temporaires nettoyés."
+
