@@ -327,6 +327,3 @@ async function main(page) {
     }
   }
 })();
-
-
-
