@@ -4,7 +4,6 @@
 Anime Downloader est un script automatisé pour télécharger des épisodes d'anime en utilisant Puppeteer pour extraire les liens de streaming et Aria2 pour gérer les téléchargements.
 
 ## Prérequis
-
 - Linux
 - Bash
 - Node.js et npm
