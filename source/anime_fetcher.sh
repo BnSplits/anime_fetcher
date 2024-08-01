@@ -77,8 +77,8 @@ for item in $links; do
     }
     name=$(_jq '.[0]')
     link=$(_jq '.[1]')
-    echo "Téléchargement de l'$name... "
-    aria2c -x 16 -d "$HOME/Anime/$anime_title/$anime_season/$lang" -o "$name.mp4" "$link" > /dev/null 2>&1
+    echo "Téléchargement de $name... "
+    aria2c -x 16 -d "$HOME/Anime/$anime_title/$anime_season/$lang" -o "$name.mp4" "$link" --summary-interval=1
     echo "Téléchargement terminé!"
     echo " "
 done
@@ -88,4 +88,3 @@ echo "[]" > links.json
 echo "{}" > info.json
 
 echo "Téléchargements terminés et fichiers temporaires nettoyés."
-
