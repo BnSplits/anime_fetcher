@@ -78,7 +78,7 @@ for item in $links; do
     name=$(_jq '.[0]')
     link=$(_jq '.[1]')
     echo "Téléchargement de $name... "
-    aria2c -x 16 -d "$HOME/Anime/$anime_title/$anime_season/$lang" -o "$name.mp4" "$link" --summary-interval=1
+    aria2c -x 16 -d "$HOME/Anime/$anime_title/$anime_season/$lang" -o "$name.mp4" "$link"  | grep --line-buffered "ETA:"
     echo "Téléchargement terminé!"
     echo " "
 done
