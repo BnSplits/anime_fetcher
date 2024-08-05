@@ -22,7 +22,7 @@ install_with_dnf() {
             sudo dnf install -y $pkg > /dev/null 2>&1
         fi
     done
-    npm list puppeteer readline-sync > /dev/null 2>&1 || npm install puppeteer readline-sync > /dev/null 2>&1
+    npm list puppeteer readline-sync > /dev/null 2>&1 || npm install puppeteer@latest readline-sync@latest > /dev/null 2>&1
 }
 
 # Fonction pour installer les paquets avec pacman sans les logs d'installation
@@ -33,7 +33,7 @@ install_with_pacman() {
             sudo pacman -S --noconfirm $pkg > /dev/null 2>&1
         fi
     done
-    npm list puppeteer readline-sync > /dev/null 2>&1 || npm install puppeteer readline-sync > /dev/null 2>&1
+    npm list puppeteer readline-sync > /dev/null 2>&1 || npm install puppeteer@latest readline-sync@latest > /dev/null 2>&1
 }
 
 # Installer les paquets en fonction du gestionnaire de paquets
