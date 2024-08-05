@@ -6,15 +6,14 @@ const fs = require("fs");
 function askQuestion(query) {
   return readlineSync.question(`=> ${query}`);
 }
- 
+
 // Déclaration du titre et de la saison
 let animeTitle = "";
 let animeSeason = "";
-
 // List des liens de téléchargement
 let download_links = [];
 
-// List des liens de redirection 
+// List des liens de redirection
 let sibnet_redirected_links = [];
 let sendvid_redirected_links = [];
 
@@ -33,7 +32,7 @@ async function main(page) {
       // Recupere le nombre de saisons et films
       availableSeasonsLength = await page.$eval(
         seasonMenu,
-        (el) => el.children.length - 1
+        (el) => el.children.length - 1,
       );
 
       // Crée la liste des saisons et films
@@ -42,14 +41,14 @@ async function main(page) {
         availableSeasonsName.push(
           await page.$eval(
             `${seasonMenu} > a:nth-child(${ep}) > div`,
-            (el) => el.textContent
-          )
+            (el) => el.textContent,
+          ),
         );
         availableSeasonsLinks.push(
           await page.$eval(
             `${seasonMenu} > a:nth-child(${ep})`,
-            (el) => el.href
-          )
+            (el) => el.href,
+          ),
         );
       }
       break;
@@ -62,14 +61,14 @@ async function main(page) {
   console.log(`\n Voici les saisons et films disponibles :`);
   for (let seasonName of availableSeasonsName) {
     console.log(
-      ` -> [${availableSeasonsName.indexOf(seasonName) + 1}] ${seasonName}`
+      ` -> [${availableSeasonsName.indexOf(seasonName) + 1}] ${seasonName}`,
     );
   }
   console.log(`\n`);
 
   // Choisir la saison ou le film
   let selectedSeason = Number(
-    askQuestion("Veuillez choisir la saison / le film (ex: 1, 2, 3, 4) : ")
+    askQuestion("Veuillez choisir la saison / le film (ex: 1, 2, 3, 4) : "),
   );
   if (selectedSeason < 1 || selectedSeason > availableSeasonsLength) {
     console.log("Selection de la Saison 1 (choix par défaut)");
@@ -83,12 +82,12 @@ async function main(page) {
 
   // Demande de choisir entre VF et VOSTFR si la VF est disponible
   let isVfAvailable = await page.$eval("#switchVF", (el) =>
-    el.checkVisibility()
+    el.checkVisibility(),
   );
   if (isVfAvailable) {
     useVf =
       askQuestion(
-        "La version VF est disponible ! Voulez-vous la sélectionner ? (o/n) : "
+        "La version VF est disponible ! Voulez-vous la sélectionner ? (o/n) : ",
       ) === "o"
         ? true
         : false;
@@ -100,7 +99,7 @@ async function main(page) {
       availableSeasonsLinks[selectedSeason - 1].replace("vostfr", "vf"),
       {
         waitUntil: "networkidle0",
-      }
+      },
     );
   }
 
@@ -133,15 +132,15 @@ async function main(page) {
   animeSeason = await page.$eval("#avOeuvre", (el) => el.textContent);
   const readerOptions = await page.$$eval(
     "#selectLecteurs > option",
-    (options) => options.map((option) => option.value)
+    (options) => options.map((option) => option.value),
   );
   const episodeOptions = await page.$$eval(
     "#selectEpisodes > option",
-    (options) => options.map((option) => option.value)
+    (options) => options.map((option) => option.value),
   );
   const episodeCount = await page.$$eval(
     "#selectEpisodes > option",
-    (options) => options.length
+    (options) => options.length,
   );
 
   // Affiche le nombre d'épisodes disponibles
@@ -149,7 +148,7 @@ async function main(page) {
 
   // Choix des épisodes à télécharger
   const episodesInput = askQuestion(
-    "Entrez les épisodes à télécharger (ex: 1, 5, 8 ou 1-6 ou A pour tous) : "
+    "Entrez les épisodes à télécharger (ex: 1, 5, 8 ou 1-6 ou A pour tous) : ",
   ).toString();
 
   // Formattage des épisodes choisis
@@ -225,14 +224,14 @@ async function main(page) {
 
       // Active le preload de la video
       await page.$eval("#video_html5_wrapper_html5_api", (el) =>
-        el.setAttribute("preload", true)
+        el.setAttribute("preload", true),
       );
 
       // Surveille les requetes réseau
       const response = await page.waitForResponse(
         (response) =>
           response.request().resourceType() === "media" &&
-          response.status() === 206
+          response.status() === 206,
       );
 
       // Récupération du lien du média
@@ -252,14 +251,14 @@ async function main(page) {
 
       // Active le preload de la video
       await page.$eval("#video-js-video_html5_api", (el) =>
-        el.setAttribute("preload", true)
+        el.setAttribute("preload", true),
       );
 
       // Surveille les requetes réseau
       const response = await page.waitForResponse(
         (response) =>
           response.request().resourceType() === "media" &&
-          response.status() === 206
+          response.status() === 206,
       );
 
       // Récupération du lien du média
@@ -271,7 +270,6 @@ async function main(page) {
       download_links.push([link[0], mediaLink]);
     }
   }
-
 
   const animeInfo = {
     animeTitle: animeTitle,
@@ -311,19 +309,19 @@ async function main(page) {
       const exists = title !== "Accès Introuvable";
       if (!exists) {
         console.log(`\nLe nom de l'animé est incorrect ! Veuillez réessayer. `);
-        continue
+        continue;
       }
       //Redéfinition de doSearch
       doSearch = false;
       await main(page);
 
       // Fermeture du navigateur
-      browser.close()
-      break
+      browser.close();
+      break;
     } catch (err) {
       console.log("Oops, une erreur est survenue : ");
-      console.error(err)
-      break
+      console.error(err);
+      break;
     }
   }
 })();
