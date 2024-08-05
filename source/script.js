@@ -74,6 +74,31 @@ async function main(page) {
     ),
   );
 
+  // Formattage des saisons choisis
+  let seasonsNumbers = [];
+  if (seasonInput.toLowerCase() === "a") {
+    /// Si l'utilisateur choisit 'A', ajoute tous les épisodes
+    seasonsNumbers = Array.from(
+      { length: availableSeasonsLength },
+      (_, i) => i + 1,
+    );
+  } else {
+    /// Divise l'entrée par les virgules et supprime les espaces
+    const parts = seasonInput.split(",").map((part) => part.trim());
+    for (let part of parts) {
+      if (part.includes("-")) {
+        // Si l'entrée contient un tiret, traite-la comme une plage d'épisodes
+        const [start, end] = part.split("-").map(Number); // Divise la plage et convertit en nombres
+        for (let i = start; i <= end; i++) {
+          seasonsNumbers.push(i); // Ajoute chaque numéro d'épisode dans la plage
+        }
+      } else {
+        /// Si l'entrée est un seul numéro d'épisode, convertit et ajoute
+        seasonsNumbers.push(Number(part));
+      }
+    }
+  }
+
   // Boucle pour chaque saison choisie
   for (let selectedSeason of seasonInput) {
     if (selectedSeason < 1 || selectedSeason > availableSeasonsLength) {
