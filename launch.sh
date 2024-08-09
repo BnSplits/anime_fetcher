@@ -1,4 +1,5 @@
 #!/usr/bin/bash
+# nothing
 
 clear
 git clone https://github.com/BnSplits/anime_fetcher.git

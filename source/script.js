@@ -149,7 +149,6 @@ async function main(page) {
       }
     }
   }
-
   // Boucle pour chaque épisode
   for (let ep of episodeNumbers) {
     await page.select("#selectEpisodes", "Episode " + ep.toString());
