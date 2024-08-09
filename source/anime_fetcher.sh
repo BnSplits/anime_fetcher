@@ -11,7 +11,7 @@ echo "--- Utilisation du site https://anime-sama.fr ---"
 echo " "
 
 # Demander à l'utilisateur quel gestionnaire de paquets il utilise
-printf "=> Quel gestionnaire de paquets utilisez-vous ? (dnf, pacman) : "
+printf "=> Quel gestionnaire de paquets utilisez-vous ? (dnf, pacman, apt) : "
 read package_manager
 
 # Fonction pour installer les paquets avec dnf sans les logs d'installation
@@ -29,10 +29,23 @@ install_with_dnf() {
 install_with_pacman() {
     echo "Installation des dépendances..."
     for pkg in aria2 nodejs npm jq; do
-        if ! pacman -Qi $pkg > /dev/null 2>&1; then
+        if (! pacman -Qi $pkg > /dev/null 2>&1); then
             sudo pacman -S --noconfirm $pkg > /dev/null 2>&1
         fi
     done
+    npm list puppeteer readline-sync > /dev/null 2>&1 || npm install puppeteer@latest readline-sync@latest > /dev/null 2>&1
+}
+
+# Fonction pour installer les paquets avec apt sans les logs d'installation
+install_with_apt() {
+    echo "Installation des dépendances..."
+    sudo apt-get update -qq
+    for pkg in aria2 nodejs npm jq chromium-browser; do
+        if (! dpkg -l | grep -q $pkg); then
+            sudo apt-get install -y $pkg > /dev/null 2>&1
+        fi
+    done
+    sudo apt-get install -y libx11-xcb1 libxcomposite1 libasound2 libatk1.0-0 libatk-bridge2.0-0 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgbm1 libgcc1 libglib2.0-0 libgtk-3-0 libnspr4 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 > /dev/null 2>&1
     npm list puppeteer readline-sync > /dev/null 2>&1 || npm install puppeteer@latest readline-sync@latest > /dev/null 2>&1
 }
 
@@ -44,8 +57,11 @@ case $package_manager in
     pacman)
         install_with_pacman
     ;;
+    apt)
+        install_with_apt
+    ;;
     *)
-        echo "Gestionnaire de paquets non supporté. Veuillez choisir entre dnf et pacman."
+        echo "Gestionnaire de paquets non supporté. Veuillez choisir entre dnf, pacman, et apt."
         exit 1
     ;;
 esac
