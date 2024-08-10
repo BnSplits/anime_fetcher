@@ -79,7 +79,7 @@ anime_season=$(echo "$anime_info" | sed -n '2p')
 lang=$(echo "$anime_info" | sed -n '3p')
 
 # Créer le répertoire de téléchargement
-mkdir -p "$HOME/Anime/$anime_title/$anime_season/$lang"
+mkdir -p "Anime/$anime_title/$anime_season/$lang"
 
 # Lire les noms et les liens depuis links.json
 links=$(jq -r '.[] | @base64' links.json)
@@ -94,7 +94,7 @@ for item in $links; do
     name=$(_jq '.[0]')
     link=$(_jq '.[1]')
     echo "Téléchargement de $name... "
-    aria2c -x 16 -d "./Anime/$anime_title/$anime_season/$lang" -o "$name.mp4" "$link"  | grep --line-buffered "ETA:"
+    aria2c -x 16 -d "Anime/$anime_title/$anime_season/$lang" -o "$name.mp4" "$link"  | grep --line-buffered "ETA:"
     echo "Téléchargement terminé!"
     echo " "
 done
