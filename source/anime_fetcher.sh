@@ -13,6 +13,39 @@ echo " "
 # Demander à l'utilisateur quel gestionnaire de paquets il utilise
 printf "=> Quel gestionnaire de paquets utilisez-vous ? (dnf, pacman, apt) : "
 read package_manager
+echo " "
+
+# Demander à l'utilisateur s'il veut utiliser mega-cmd pour envoyer ses épisodes sur un compte Mega
+printf "=> Voulez-vous utiliser mega-cmd pour stocker vos épisodes sur un compte Mega ? (y/n) : "
+read use_mega_cmd
+echo " "
+
+# Demande à l'utilisateur s'il a déjà configuré mega-cmd
+case $use_mega_cmd in 
+    y)
+        printf "=> Avez-vous déjà configuré mega-cmd avec votre compte ? (y/n) : "
+        read is_configured
+        echo " "
+        ;;
+    *)
+        exit 1
+        ;;
+esac
+
+# Demande à l'utilisateur ses infos de compte s'il n'a pas encore configuré mega-cmd
+case $is_configured in
+    y)
+        exit 1
+        ;;
+    *)
+        printf "=> Veuillez entrer l'adresse mail de votre compte Mega : "
+        read mega_email
+        echo " "
+        printf "=> Veuillez entrer le mot de passe de votre compte Mega : "
+        read mega_password
+        echo " "
+        ;;
+esac
 
 # Fonction pour installer les paquets avec dnf sans les logs d'installation
 install_with_dnf() {
@@ -23,17 +56,31 @@ install_with_dnf() {
         fi
     done
     npm list puppeteer readline-sync > /dev/null 2>&1 || npm install puppeteer@latest readline-sync@latest > /dev/null 2>&1
+
+    # Installation de mega-cmd
+    if [[ $use_mega_cmd == y ]]; then
+        if ! rpm -q mega-cmd > /dev/null 2>&1; then
+            sudo dnf install -y mega-cmd > /dev/null 2>&1
+        fi
+    fi
 }
 
 # Fonction pour installer les paquets avec pacman sans les logs d'installation
 install_with_pacman() {
     echo "Installation des dépendances..."
     for pkg in aria2 nodejs npm jq; do
-        if (! pacman -Qi $pkg > /dev/null 2>&1); then
+        if ! pacman -Qi $pkg > /dev/null 2>&1; then
             sudo pacman -S --noconfirm $pkg > /dev/null 2>&1
         fi
     done
     npm list puppeteer readline-sync > /dev/null 2>&1 || npm install puppeteer@latest readline-sync@latest > /dev/null 2>&1
+    
+    # Installation de mega-cmd
+    if [[ $use_mega_cmd == y ]]; then
+        if ! pacman -Qi mega-cmd > /dev/null 2>&1; then
+            sudo pacman -S --noconfirm mega-cmd > /dev/null 2>&1
+        fi
+    fi
 }
 
 # Fonction pour installer les paquets avec apt sans les logs d'installation
@@ -47,30 +94,45 @@ install_with_apt() {
     done
     sudo apt-get install -y libx11-xcb1 libxcomposite1 libasound2 libatk1.0-0 libatk-bridge2.0-0 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgbm1 libgcc1 libglib2.0-0 libgtk-3-0 libnspr4 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 > /dev/null 2>&1
     npm list puppeteer readline-sync > /dev/null 2>&1 || npm install puppeteer@latest readline-sync@latest > /dev/null 2>&1
+
+    # Installation de mega-cmd
+    if [[ $use_mega_cmd == y ]]; then
+        if ! dpkg -l | grep -q mega-cmd; then
+            wget https://mega.nz/linux/repo/xUbuntu_20.04/amd64/megacmd-xUbuntu_20.04_amd64.deb && sudo apt install "$PWD/megacmd-xUbuntu_20.04_amd64.deb"
+        fi
+    fi
 }
 
 # Installer les paquets en fonction du gestionnaire de paquets
 case $package_manager in
     dnf)
         install_with_dnf
-    ;;
+        ;;
     pacman)
         install_with_pacman
-    ;;
+        ;;
     apt)
         install_with_apt
-    ;;
+        ;;
     *)
         echo "Gestionnaire de paquets non supporté. Veuillez choisir entre dnf, pacman, et apt."
         exit 1
-    ;;
+        ;;
 esac
 
 echo "Installation terminée."
 echo " "
 
+# Configure le compte mega-cmd si nécessaire
+if [[ $use_mega_cmd == y ]]; then
+    printf "Configuration de votre compte Mega avec mega-cmd... "
+    mega-login $mega_email $mega_password
+    echo " "
+fi
+
 # Exécuter le fichier script.js avec Node.js
 node script.js
+echo " "
 
 # Lire les informations de l'anime depuis le fichier temporaire
 anime_info=$(jq -r '.animeTitle, .animeSeason, .lang' info.json)
@@ -78,8 +140,10 @@ anime_title=$(echo "$anime_info" | sed -n '1p')
 anime_season=$(echo "$anime_info" | sed -n '2p')
 lang=$(echo "$anime_info" | sed -n '3p')
 
-# Créer le répertoire de téléchargement
+# Créer les répertoires de téléchargement et de sync
 mkdir -p "Anime/$anime_title/$anime_season/$lang"
+mega-mkdir "Anime/$anime_title/$anime_season/$lang" 
+echo " "
 
 # Lire les noms et les liens depuis links.json
 links=$(jq -r '.[] | @base64' links.json)
@@ -94,16 +158,23 @@ for item in $links; do
     name=$(_jq '.[0]')
     link=$(_jq '.[1]')
     echo "Téléchargement de $name... "
-    aria2c -x 16 -d "Anime/$anime_title/$anime_season/$lang" -o "$name.mp4" "$link"  | grep --line-buffered "ETA:"
+    aria2c -x 16 -d "Anime/$anime_title/$anime_season/$lang" -o "$name.mp4" "$link" | grep --line-buffered "ETA:"
     echo "Téléchargement terminé!"
     echo " "
+
+    # Envoi de l'épisode sur le compte Mega si nécessaire
+    if [[ $use_mega_cmd == y ]]; then
+        printf "Transfert de $name sur votre compte Mega... "
+        mega-put "Anime/$anime_title/$anime_season/$lang/$name.mp4" "Anime/$anime_title/$anime_season/$lang" 
+        echo " "
+    fi
 done
 
 # Nettoyer le contenu de links.json et info.json sans les supprimer
 echo "[]" > links.json
 echo "{}" > info.json
+echo " "
 
 # Nettoyage du dossier des Animes
-rm -rm "Anime/"
-
-echo "Téléchargements terminés dossier Aniem/ et fichiers temporaires nettoyés."
+rm -r "Anime/"
+echo "Téléchargements terminés, dossier Anime/ et fichiers temporaires nettoyés."
