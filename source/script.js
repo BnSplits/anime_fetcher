@@ -287,7 +287,7 @@ async function main(page) {
 
 (async () => {
   // Lancement de Puppeteer et ouverture d'une nouvelle page
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await puppeteer.launch({ headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] });
   const page = await browser.newPage();
 
   // Boucle jusqu'à trouver un animé recherché
