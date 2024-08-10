@@ -21,31 +21,26 @@ read use_mega_cmd
 echo " "
 
 # Demande à l'utilisateur s'il a déjà configuré mega-cmd
-case $use_mega_cmd in 
-    y)
-        printf "=> Avez-vous déjà configuré mega-cmd avec votre compte ? (y/n) : "
-        read is_configured
-        echo " "
-        ;;
-    *)
-        exit 1
-        ;;
-esac
+if [[ $use_mega_cmd == "y" ]]; then
+    printf "=> Avez-vous déjà configuré mega-cmd avec votre compte ? (y/n) : "
+    read is_configured
+    echo " "
+fi
 
 # Demande à l'utilisateur ses infos de compte s'il n'a pas encore configuré mega-cmd
-case $is_configured in
-    y)
-        exit 1
-        ;;
-    *)
-        printf "=> Veuillez entrer l'adresse mail de votre compte Mega : "
-        read mega_email
-        echo " "
-        printf "=> Veuillez entrer le mot de passe de votre compte Mega : "
-        read mega_password
-        echo " "
-        ;;
-esac
+if [[ $use_mega_cmd == "y" && $is_configured != "y" ]]; then
+    printf "=> Veuillez entrer l'adresse mail de votre compte Mega : "
+    read mega_email
+    echo " "
+    printf "=> Veuillez entrer le mot de passe de votre compte Mega : "
+    read mega_password
+    echo " "
+fi
+
+# Demande à l'utilisateur s'il veut supprimer chaque épisode après le téléchargement
+printf "=> Voulez-vous supprimer chaque épisode une fois téléchargé et envoyé sur Mega ? (y/n): "
+read delete_on_finished
+echo " "
 
 # Fonction pour installer les paquets avec dnf sans les logs d'installation
 install_with_dnf() {
@@ -58,7 +53,7 @@ install_with_dnf() {
     npm list puppeteer readline-sync > /dev/null 2>&1 || npm install puppeteer@latest readline-sync@latest > /dev/null 2>&1
 
     # Installation de mega-cmd
-    if [[ $use_mega_cmd == y ]]; then
+    if [[ $use_mega_cmd == "y" ]]; then
         if ! rpm -q mega-cmd > /dev/null 2>&1; then
             sudo dnf install -y mega-cmd > /dev/null 2>&1
         fi
@@ -76,7 +71,7 @@ install_with_pacman() {
     npm list puppeteer readline-sync > /dev/null 2>&1 || npm install puppeteer@latest readline-sync@latest > /dev/null 2>&1
     
     # Installation de mega-cmd
-    if [[ $use_mega_cmd == y ]]; then
+    if [[ $use_mega_cmd == "y" ]]; then
         if ! pacman -Qi mega-cmd > /dev/null 2>&1; then
             sudo pacman -S --noconfirm mega-cmd > /dev/null 2>&1
         fi
@@ -96,9 +91,10 @@ install_with_apt() {
     npm list puppeteer readline-sync > /dev/null 2>&1 || npm install puppeteer@latest readline-sync@latest > /dev/null 2>&1
 
     # Installation de mega-cmd
-    if [[ $use_mega_cmd == y ]]; then
+    if [[ $use_mega_cmd == "y" ]]; then
         if ! dpkg -l | grep -q mega-cmd; then
-            wget https://mega.nz/linux/repo/xUbuntu_20.04/amd64/megacmd-xUbuntu_20.04_amd64.deb && sudo apt install "$PWD/megacmd-xUbuntu_20.04_amd64.deb" > /dev/null 2>&1
+            echo "Installation de mega-cmd..."
+            wget https://mega.nz/linux/repo/xUbuntu_20.04/amd64/megacmd-xUbuntu_20.04_amd64.deb  > /dev/null 2>&1 && sudo apt install -y "$PWD/megacmd-xUbuntu_20.04_amd64.deb"  > /dev/null 2>&1 && rm megacmd-xUbuntu*
         fi
     fi
 }
@@ -124,7 +120,7 @@ echo "Installation terminée."
 echo " "
 
 # Configure le compte mega-cmd si nécessaire
-if [[ $use_mega_cmd == y ]]; then
+if [[ $use_mega_cmd == "y" && $is_configured != "y" ]]; then
     printf "Configuration de votre compte Mega avec mega-cmd... "
     mega-login $mega_email $mega_password
     echo " "
@@ -142,7 +138,9 @@ lang=$(echo "$anime_info" | sed -n '3p')
 
 # Créer les répertoires de téléchargement et de sync
 mkdir -p "Anime/$anime_title/$anime_season/$lang"
-mega-mkdir -p "Anime/$anime_title/$anime_season/$lang" 
+if [[ $use_mega_cmd == "y" ]]; then
+    mega-mkdir -p "Anime/$anime_title/$anime_season/$lang" 
+fi
 echo " "
 
 # Lire les noms et les liens depuis links.json
@@ -163,18 +161,22 @@ for item in $links; do
     echo " "
 
     # Envoi de l'épisode sur le compte Mega si nécessaire
-    if [[ $use_mega_cmd == y ]]; then
+    if [[ $use_mega_cmd == "y" ]]; then
         printf "Transfert de $name sur votre compte Mega... "
         mega-put -c "Anime/$anime_title/$anime_season/$lang/$name.mp4" "Anime/$anime_title/$anime_season/$lang" 
         echo " "
+
+        case $delete_on_finished in
+            y)
+                printf "Suppression de $name ! "
+                rm -r "Anime/$anime_title/$anime_season/$lang/$name.mp4"
+                printf "\n"
+                ;;
+            *)
+                ;;
+        esac
     fi
+
 done
 
-# Nettoyer le contenu de links.json et info.json sans les supprimer
-echo "[]" > links.json
-echo "{}" > info.json
-echo " "
-
-# Nettoyage du dossier des Animes
-rm -r "Anime/"
-echo "Téléchargements terminés, dossier Anime/ et fichiers temporaires nettoyés."
+echo "Téléchargement et transfert terminés !"
