@@ -98,7 +98,7 @@ install_with_apt() {
     # Installation de mega-cmd
     if [[ $use_mega_cmd == y ]]; then
         if ! dpkg -l | grep -q mega-cmd; then
-            wget https://mega.nz/linux/repo/xUbuntu_20.04/amd64/megacmd-xUbuntu_20.04_amd64.deb && sudo apt install "$PWD/megacmd-xUbuntu_20.04_amd64.deb"
+            wget https://mega.nz/linux/repo/xUbuntu_20.04/amd64/megacmd-xUbuntu_20.04_amd64.deb && sudo apt install "$PWD/megacmd-xUbuntu_20.04_amd64.deb" > /dev/null 2>&1
         fi
     fi
 }
@@ -142,7 +142,7 @@ lang=$(echo "$anime_info" | sed -n '3p')
 
 # Créer les répertoires de téléchargement et de sync
 mkdir -p "Anime/$anime_title/$anime_season/$lang"
-mega-mkdir "Anime/$anime_title/$anime_season/$lang" 
+mega-mkdir -p "Anime/$anime_title/$anime_season/$lang" 
 echo " "
 
 # Lire les noms et les liens depuis links.json
@@ -165,7 +165,7 @@ for item in $links; do
     # Envoi de l'épisode sur le compte Mega si nécessaire
     if [[ $use_mega_cmd == y ]]; then
         printf "Transfert de $name sur votre compte Mega... "
-        mega-put "Anime/$anime_title/$anime_season/$lang/$name.mp4" "Anime/$anime_title/$anime_season/$lang" 
+        mega-put -c "Anime/$anime_title/$anime_season/$lang/$name.mp4" "Anime/$anime_title/$anime_season/$lang" 
         echo " "
     fi
 done
