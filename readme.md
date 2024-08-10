@@ -7,6 +7,7 @@ Anime Downloader est un script automatisé pour télécharger des épisodes d'an
 - Linux
 - Bash
 - Node.js et npm
+- jq
 - Un gestionnaire de paquets (apt, dnf, ou pacman)
 ```
 
