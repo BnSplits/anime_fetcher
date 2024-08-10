@@ -300,7 +300,7 @@ async function main(page) {
       console.log(" Recherche en cours...");
 
       // Modifie le timeout maximum de la page (en millisecondes)
-      page.setDefaultNavigationTimeout(60000);
+      page.setDefaultNavigationTimeout(120000);
 
       const url = `https://anime-sama.fr/catalogue/${name}/`;
       await page.goto(url, { waitUntil: "networkidle0" });
