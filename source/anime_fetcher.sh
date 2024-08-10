@@ -40,8 +40,8 @@ install_with_pacman() {
 install_with_apt() {
     echo "Installation des dépendances..."
     sudo apt-get update -qq
-    for pkg in aria2 nodejs npm jq chromium-browser; do
-        if (! dpkg -l | grep -q $pkg); then
+    for pkg in aria2 nodejs npm jq; do
+        if ! dpkg -l | grep -q $pkg; then
             sudo apt-get install -y $pkg > /dev/null 2>&1
         fi
     done
