@@ -103,4 +103,7 @@ done
 echo "[]" > links.json
 echo "{}" > info.json
 
-echo "Téléchargements terminés et fichiers temporaires nettoyés."
+# Nettoyage du dossier des Animes
+rm -rm "Anime/"
+
+echo "Téléchargements terminés dossier Aniem/ et fichiers temporaires nettoyés."
