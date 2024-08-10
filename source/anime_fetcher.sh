@@ -168,9 +168,8 @@ for item in $links; do
 
         case $delete_on_finished in
             y)
-                printf "Suppression de $name ! "
+                echo -e "Suppression de $name ! \n"
                 rm -r "Anime/$anime_title/$anime_season/$lang/$name.mp4"
-                printf "\n"
                 ;;
             *)
                 ;;
