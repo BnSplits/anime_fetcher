@@ -24,7 +24,7 @@ echo " "
 if [[ $use_mega_cmd == "y" ]]; then
     printf "=> Avez-vous déjà configuré mega-cmd avec votre compte ? (y/n) : "
     read is_configured
-    echo " "
+echo " "
 fi
 
 # Demande à l'utilisateur ses infos de compte s'il n'a pas encore configuré mega-cmd
@@ -73,7 +73,7 @@ install_with_pacman() {
     # Installation de mega-cmd
     if [[ $use_mega_cmd == "y" ]]; then
         if ! pacman -Qi mega-cmd > /dev/null 2>&1; then
-            sudo pacman -S --noconfirm mega-cmd > /dev/null 2>&1
+           wget https://mega.nz/linux/repo/Arch_Extra/x86_64/megacmd-x86_64.pkg.tar.zst && sudo pacman -U --noconfirm  "$PWD/megacmd-x86_64.pkg.tar.zst" > /dev/null 2&>1 && rm -rf megacmd-x86_64.pkg.tar.zst 
         fi
     fi
 }

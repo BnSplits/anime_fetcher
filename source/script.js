@@ -1,4 +1,4 @@
-const puppeteer = require("puppeteer");
+import { puppeteer } from "puppeteer";
 const readlineSync = require("readline-sync");
 const fs = require("fs");
 
@@ -6,13 +6,6 @@ const fs = require("fs");
 function askQuestion(query) {
   return readlineSync.question(`=> ${query}`);
 }
-
-// Déclaration du titre et de la saison
-let animeTitle = "";
-let animeSeason = "";
-
-// List des liens de téléchargement
-let download_links = [];
 
 // List des liens de redirection
 let sibnet_redirected_links = [];
@@ -105,8 +98,9 @@ async function main(page) {
   }
 
   // Récupération des informations nécessaires (titre, saison, lecteurs disponibles, épisodes disponibles, nombre d'épisodes,)
-  animeTitle = await page.$eval("#titreOeuvre", (el) => el.textContent);
-  animeSeason = await page.$eval("#avOeuvre", (el) => el.textContent);
+  let animeTitle = await page.$eval("#titreOeuvre", (el) => el.textContent);
+  let animeSeason = await page.$eval("#avOeuvre", (el) => el.textContent);
+
   const readerOptions = await page.$$eval(
     "#selectLecteurs > option",
     (options) => options.map((option) => option.value),
@@ -218,6 +212,13 @@ async function main(page) {
     console.log("\n");
   }
 
+
+
+  // List des liens de téléchargement
+  let downloadLinks = [];
+
+
+
   // Redirection et copie des liens de téléchargement (sibnet)
   if (sibnet_redirected_links.length !== 0) {
     for (let link of sibnet_redirected_links) {
@@ -241,7 +242,7 @@ async function main(page) {
       // console.log(` -> Lien média trouvé pour l'${link[0]}: ${mediaLink}\n`);
 
       /// Injection du lien de téléchargement et du nom de l'épisode
-      download_links.push([link[0], mediaLink]);
+      downloadLinks.push([link[0], mediaLink]);
     }
   }
 
@@ -268,7 +269,7 @@ async function main(page) {
       // console.log(` -> Lien média trouvé pour l'${link[0]}: ${mediaLink}\n`);
 
       /// Injection du lien de téléchargement et du nom de l'épisode
-      download_links.push([link[0], mediaLink]);
+      downloadLinks.push([link[0], mediaLink]);
     }
   }
 
@@ -280,7 +281,7 @@ async function main(page) {
   fs.writeFileSync("info.json", JSON.stringify(animeInfo, null, 2));
 
   // Ecrit tous les liens dans le fichier links.json
-  fs.writeFileSync("links.json", JSON.stringify(download_links, null, 2));
+  fs.writeFileSync("links.json", JSON.stringify(downloadLinks, null, 2));
 }
 
 // Fonction auto-executrice
