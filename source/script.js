@@ -1,4 +1,6 @@
-import { puppeteer } from "puppeteer";
+#!/usr/bin/env node
+
+const puppeteer = require("puppeteer")
 const readlineSync = require("readline-sync");
 const fs = require("fs");
 
@@ -7,15 +9,13 @@ function askQuestion(query) {
   return readlineSync.question(`=> ${query}`);
 }
 
-// List des liens de redirection
-let sibnet_redirected_links = [];
-let sendvid_redirected_links = [];
-
-// Utilisation ou non de la vf
-let useVf = false;
-
 // Fonction principale
 async function main(page) {
+
+  // List des liens de redirection
+  let sibnet_redirected_links = [];
+  let sendvid_redirected_links = [];
+
   // Boucle qui va tester les possibilités du menu des saisons
   let availableSeasonsLength;
   let availableSeasonsName = [];
@@ -75,6 +75,7 @@ async function main(page) {
   }
 
   // Demande de choisir entre VF et VOSTFR si la VF est disponible
+  let useVf = false
   let isVfAvailable = await page.$eval("#switchVF", (el) =>
     el.checkVisibility(),
   );
