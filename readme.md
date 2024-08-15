@@ -13,7 +13,7 @@ Anime Downloader est un script automatisé pour télécharger des épisodes d'an
 
 ## Installation et utilisation
 ```sh
-  ./launch.sh
+  ./install.sh
 ```
 
 ### Explications du script
