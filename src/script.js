@@ -446,7 +446,7 @@ import gradient from "gradient-string";
 
           // Récupération du lien du média
           const mediaLink = response.url();
-          console.log(` >> Lien média trouvé pour l'${link[0]}: ${mediaLink}`);
+          console.log(` -> Lien média trouvé pour l'${link[0]}: ${mediaLink}`);
 
           // Injection du lien de téléchargement et du nom de l'épisode
           downloadLinks.push([link[0], mediaLink]);
@@ -472,7 +472,7 @@ import gradient from "gradient-string";
 
           // Récupération du lien du média
           const mediaLink = response.url();
-          console.log(` >> Lien média trouvé pour l'${link[0]}: ${mediaLink}`);
+          console.log(` -> Lien média trouvé pour l'${link[0]}: ${mediaLink}`);
 
           // Injection du lien de téléchargement et du nom de l'épisode
           downloadLinks.push([link[0], mediaLink]);
