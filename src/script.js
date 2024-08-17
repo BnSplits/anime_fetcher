@@ -1,14 +1,195 @@
-#!/usr/bin/env node
-
-const puppeteer = require("puppeteer");
-const readlineSync = require("readline-sync");
-const fs = require("fs");
+import { execSync } from "child_process";
+import fs from "fs";
+import path from "path";
+import puppeteer from "puppeteer";
+import { input, select } from "@inquirer/prompts";
+import { createSpinner } from "nanospinner";
+import gradient from "gradient-string";
 
 // Fonction principale
 (async () => {
-  // Fonction pour poser une question à l'utilisateur et attendre la réponse
-  function askQuestion(query) {
-    return readlineSync.question(`=> ${query}`);
+  // Fonction d'input
+  const Input = async (message, def = "") => {
+    const result = await input({
+      message: message + " :",
+      default: def,
+      required: true,
+      theme: { prefix: "=>" },
+    });
+
+    return result;
+  };
+
+  // Fonction de select
+  const Select = async (message, choices) => {
+    const result = await select({
+      message: message + " :",
+      choices: choices,
+      pageSize: 999,
+      theme: {
+        prefix: "=>",
+        icon: {
+          cursor: " >",
+        },
+      },
+    });
+
+    return result;
+  };
+
+  // Fonction de confirm
+  const Confirm = async (message, def = "yes") => {
+    const result = await select({
+      message: message,
+      choices: [
+        {
+          name: "yes",
+          value: true,
+          description: false,
+        },
+        {
+          name: "no",
+          value: false,
+          description: false,
+        },
+      ],
+      default: def,
+      theme: {
+        prefix: "=>",
+      },
+    });
+
+    return result;
+  };
+
+  console.clear();
+
+  // Introduction
+  console.log(
+    gradient.pastel.multiline(
+      `### Anime downloader by BananaSplit ###\n--- Utilisation du site https://anime-sama.fr ---`,
+    ),
+  );
+
+  // Demande à l'utilisateur son gestionnaire de paquets
+  const packageManager = await Select(
+    "Quel gestionnaire de paquets utilisez-vous ?",
+    [
+      { name: "Pacman", value: "Pacman", description: false },
+      { name: "Apt", value: "Apt", description: false },
+      { name: "Dnf", value: "Dnf", description: false },
+    ],
+  );
+
+  // Demande à l'utilisateur s'il veut utiliser mega-cmd
+  const useMegaCmd = await Confirm(
+    "Voulez-vous utiliser mega-cmd pour stocker vos épisodes sur un compte Mega ?",
+  );
+
+  // Demande si mega-cmd est déja configurer
+  let isMegaConfigured;
+  if (useMegaCmd) {
+    isMegaConfigured = await Confirm(
+      "Avez-vous déjà configuré mega-cmd avec votre compte ?",
+    );
+  }
+
+  // Demande à l'utilisateur ses infos de compte s'il n'a pas encore configuré mega-cmd
+  let megaMail;
+  let megaPsw;
+  if (useMegaCmd && !isMegaConfigured) {
+    megaMail = await Input(
+      "Veuillez entrer l'adresse mail de votre compte Mega",
+    );
+    megaPsw = await Input(
+      "Veuillez entrer le mot de passe de votre compte Mega ",
+    );
+  }
+
+  // Demande à l'utilisateur s'il veut supprimer chaque épisode après le téléchargement
+  const deleteOnFinished = await Confirm(
+    "Voulez-vous supprimer chaque épisode une fois téléchargé et envoyé sur Mega ?",
+  );
+
+  // Fonction pour installer les dépendances selon le gestionnaire de paquets
+  const installDependencies = (command) => {
+    execSync(command, { shell: "/bin/bash", stdio: "inherit" });
+    console.log("Installation terminée.");
+  };
+
+  // Commandes pour l'installation des dépendances selon le gestionnaire de paquets
+  const installCommands = {
+    Pacman: `
+      echo "Installation des dépendances..."
+      for pkg in aria2 ; do
+          if ! pacman -Qi $pkg >/dev/null 2>&1; then
+              sudo pacman -S --noconfirm $pkg >/dev/null 2>&1
+          fi
+      done
+
+      if [[ ${useMegaCmd} ]]; then
+          if ! pacman -Qi mega-cmd >/dev/null 2>&1; then
+              wget https://mega.nz/linux/repo/Arch_Extra/x86_64/megacmd-x86_64.pkg.tar.zst >/dev/null 2>&1 && sudo pacman -U --noconfirm "megacmd-x86_64.pkg.tar.zst" >/dev/null 2>&1 && rm -rf megacmd-x86_64*
+          fi
+      fi
+    `,
+    Apt: `
+      echo "Installation des dépendances..."
+      sudo apt-get update -qq
+      for pkg in aria2 ; do
+          if ! dpkg -l | grep -q $pkg; then
+              sudo apt-get install -y $pkg >/dev/null 2>&1
+          fi
+      done
+
+      sudo apt-get install -y libx11-xcb1 libxcomposite1 libasound2 libatk1.0-0 libatk-bridge2.0-0 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgbm1 libgcc1 libglib2.0-0 libgtk-3-0 libnspr4 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 >/dev/null 2>&1
+
+      if [[ ${useMegaCmd} ]]; then
+          if ! dpkg -l | grep -q mega-cmd; then
+              echo "Installation de mega-cmd..."
+              wget https://mega.nz/linux/repo/xUbuntu_20.04/amd64/megacmd-xUbuntu_20.04_amd64.deb >/dev/null 2>&1 && sudo apt install -y "$PWD/megacmd-xUbuntu_20.04_amd64.deb" >/dev/null 2>&1 && rm megacmd-xUbuntu*
+          fi
+      fi
+    `,
+    Dnf: `
+      echo "Installation des dépendances..."
+      for pkg in aria2 ; do
+          if ! rpm -q $pkg >/dev/null 2>&1; then
+              sudo dnf install -y $pkg >/dev/null 2>&1
+          fi
+      done
+
+      if [[ ${useMegaCmd} ]]; then
+          if ! rpm -q mega-cmd >/dev/null 2>&1; then
+              sudo dnf install -y mega-cmd >/dev/null 2>&1
+          fi
+      fi
+    `,
+  };
+
+  // Installer les paquets en fonction du gestionnaire de paquets
+  if (installCommands[packageManager]) {
+    installDependencies(installCommands[packageManager]);
+  } else {
+    console.error("Gestionnaire de paquets inconnu");
+  }
+
+  // Configure mega-cmd
+  if (useMegaCmd && !isMegaConfigured && megaMail && megaPsw) {
+    console.log("Configuration de votre compte mega...");
+
+    try {
+      execSync(`mega-logout && mega-login ${megaMail} ${megaPsw}`, {
+        shell: "/bin/bash",
+        stdio: "inherit",
+      });
+      console.log("Configuration réussie de votre compte mega.");
+    } catch (error) {
+      console.error(
+        "Erreur lors de la configuration de mega-cmd :",
+        error.message,
+      );
+    }
   }
 
   // Lancement de Puppeteer et ouverture d'une nouvelle page
@@ -22,10 +203,10 @@ const fs = require("fs");
   let doSearch = true;
   while (doSearch) {
     try {
-      const name = askQuestion("Entrez le nom de l'anime : ")
-        .toLowerCase()
-        .replace(/\s+/g, "-");
-      console.log(" Recherche en cours...");
+      let name = await Input("Entrez le nom de l'anime");
+      name = name.toLowerCase().replace(/\s+/g, "-");
+
+      const searchNameSpinner = createSpinner("Recherche en cours...").start();
 
       // Modifie le timeout maximum de la page (en millisecondes)
       page.setDefaultNavigationTimeout(120000);
@@ -36,12 +217,16 @@ const fs = require("fs");
       // Vérification si la page existe en regardant le titre de la page
       const title = await page.title();
       const exists = title !== "Accès Introuvable";
+
+      // Redemande le nom de l'anime si celui entré n'existe pas
       if (!exists) {
-        console.log(`\nLe nom de l'animé est incorrect ! Veuillez réessayer. `);
+        searchNameSpinner.error({ text: "Animé non-trouvé !" });
+        console.log(`Le nom de l'animé est incorrect ! Veuillez réessayer. `);
         continue;
       }
-      //Redéfinition de doSearch
+      //Redéfinition si l'anime est trouvé de doSearch
       doSearch = false;
+      searchNameSpinner.success({ text: "Animé trouvé !" });
 
       // List des liens de redirection
       let sibnet_redirected_links = [];
@@ -82,28 +267,30 @@ const fs = require("fs");
         }
       }
 
-      // Affiche les saisons et films displonible
-      console.log(`\n Voici les saisons et films disponibles :`);
-      for (let seasonName of availableSeasonsName) {
-        console.log(
-          ` -> [${availableSeasonsName.indexOf(seasonName) + 1}] ${seasonName}`,
-        );
-      }
-      console.log(`\n`);
-
       // Choisir la saison ou le film
-      let selectedSeason = Number(
-        askQuestion("Veuillez choisir la saison / le film (ex: 1, 2, 3, 4) : "),
+      let seasonsChoices = availableSeasonsName.map((e) => {
+        return {
+          value: e,
+          name: e,
+          description: false,
+        };
+      });
+      let selectedSeason = await Select(
+        "Veuillez choisir la saison / le film",
+        seasonsChoices,
       );
-      if (selectedSeason < 1 || selectedSeason > availableSeasonsLength) {
-        console.log("Selection de la Saison 1 (choix par défaut)");
-        selectedSeason = 1;
-        await page.goto(availableSeasonsLinks[0], {
-          waitUntil: "networkidle0",
-        });
+
+      const searchAnimeSeasonSpinner = createSpinner("Patientez...").start();
+      const goToSeason = await page.goto(
+        availableSeasonsLinks[availableSeasonsName.indexOf(selectedSeason)],
+        { waitUntil: "networkidle0" },
+      );
+
+      if (goToSeason && goToSeason.ok()) {
+        searchAnimeSeasonSpinner.success({ text: "Saison / film trouvé !" });
       } else {
-        await page.goto(availableSeasonsLinks[selectedSeason - 1], {
-          waitUntil: "networkidle0",
+        searchAnimeSeasonSpinner.error({
+          text: "Impossible d'accéder à la saison / le film :(",
         });
       }
 
@@ -113,12 +300,10 @@ const fs = require("fs");
         el.checkVisibility(),
       );
       if (isVfAvailable) {
-        useVf =
-          askQuestion(
-            "La version VF est disponible ! Voulez-vous la sélectionner ? (o/n) : ",
-          ) === "o"
-            ? true
-            : false;
+        useVf = await Confirm(
+          "La version VF est disponible ! Voulez-vous la sélectionner ?",
+          false,
+        );
       }
 
       // Redirige vers la page de la VF
@@ -139,30 +324,30 @@ const fs = require("fs");
         "#selectLecteurs > option",
         (options) => options.map((option) => option.value),
       );
-      const episodeOptions = await page.$$eval(
-        "#selectEpisodes > option",
-        (options) => options.map((option) => option.value),
-      );
       const episodeCount = await page.$$eval(
         "#selectEpisodes > option",
         (options) => options.length,
       );
 
       // Affiche le nombre d'épisodes disponibles
-      console.log(`\n ${episodeCount} Episodes sont disponibles ! `);
+      console.log(`${episodeCount} Episodes sont disponibles ! `);
 
       // Choix des épisodes à télécharger
-      const episodesInput = askQuestion(
-        "Entrez les épisodes à télécharger (ex: 1, 5, 8 ou 1-6 ou A pour tous) : ",
-      ).toString();
+      const episodesInput = await Input(
+        "Entrez les épisodes à télécharger (ex: 1, 5, 8 ou 1-6 ou A pour tous)",
+        "All",
+      );
 
       // Formattage des épisodes choisis
       let episodeNumbers = [];
-      if (episodesInput.toLowerCase() === "a") {
-        /// Si l'utilisateur choisit 'A', ajoute tous les épisodes
+      if (
+        episodesInput.toLowerCase() === "a" ||
+        episodesInput.toLowerCase() === "all"
+      ) {
+        // Si l'utilisateur choisit 'A', ajoute tous les épisodes
         episodeNumbers = Array.from({ length: episodeCount }, (_, i) => i + 1);
       } else {
-        /// Divise l'entrée par les virgules et supprime les espaces
+        // Divise l'entrée par les virgules et supprime les espaces
         const parts = episodesInput.split(",").map((part) => part.trim());
         for (let part of parts) {
           if (part.includes("-")) {
@@ -172,7 +357,7 @@ const fs = require("fs");
               episodeNumbers.push(i); // Ajoute chaque numéro d'épisode dans la plage
             }
           } else {
-            /// Si l'entrée est un seul numéro d'épisode, convertit et ajoute
+            // Si l'entrée est un seul numéro d'épisode, convertit et ajoute
             episodeNumbers.push(Number(part));
           }
         }
@@ -181,7 +366,7 @@ const fs = require("fs");
       for (let ep of episodeNumbers) {
         await page.select("#selectEpisodes", "Episode " + ep.toString());
 
-        /// Boucle sur chaque option de lecteur pour trouver "sibnet" ou "sendvid"
+        // Boucle sur chaque option de lecteur pour trouver "sibnet" ou "sendvid"
         for (let reader of readerOptions) {
           await page.select("#selectLecteurs", reader);
           const src = await page.$eval("#playerDF", (el) =>
@@ -213,7 +398,7 @@ const fs = require("fs");
                 return ep;
             }
           })();
-          /// Si le lien est trouvé alors le rajouter à la liste des liens de redirection
+          // Si le lien est trouvé alors le rajouter à la liste des liens de redirection
           if (src.includes("sibnet")) {
             sibnet_redirected_links.push(["Episode " + ep.toString(), src]);
             break;
@@ -225,27 +410,18 @@ const fs = require("fs");
       }
 
       // Affichage des liens et épisode copiés
-      console.log("\n");
-      if (sibnet_redirected_links.length === 0) {
-        console.log("Serveur sibnet : aucun lien !");
-        console.log("\n");
-      } else {
+      if (sibnet_redirected_links.length !== 0) {
         console.log("Serveur sibnet: ");
         for (let link of sibnet_redirected_links) {
-          console.log(` -> ${link}`);
+          console.log(` >> ${link}`);
         }
-        console.log("\n");
       }
 
-      if (sendvid_redirected_links.length === 0) {
-        console.log("Serveur Sendvid : aucun lien !");
-        console.log("\n");
-      } else {
+      if (sendvid_redirected_links.length !== 0) {
         console.log("Serveur Sendvid: ");
         for (let link of sendvid_redirected_links) {
-          console.log(` -> ${link}`);
+          console.log(` >> ${link}`);
         }
-        console.log("\n");
       }
 
       // List des liens de téléchargement
@@ -270,10 +446,9 @@ const fs = require("fs");
 
           // Récupération du lien du média
           const mediaLink = response.url();
-          console.log(` -> Lien média trouvé pour l'${link[0]}\n`);
-          // console.log(` -> Lien média trouvé pour l'${link[0]}: ${mediaLink}\n`);
+          console.log(` >> Lien média trouvé pour l'${link[0]}: ${mediaLink}`);
 
-          /// Injection du lien de téléchargement et du nom de l'épisode
+          // Injection du lien de téléchargement et du nom de l'épisode
           downloadLinks.push([link[0], mediaLink]);
         }
       }
@@ -297,23 +472,121 @@ const fs = require("fs");
 
           // Récupération du lien du média
           const mediaLink = response.url();
-          console.log(` -> Lien média trouvé pour l'${link[0]}\n`);
-          // console.log(` -> Lien média trouvé pour l'${link[0]}: ${mediaLink}\n`);
+          console.log(` >> Lien média trouvé pour l'${link[0]}: ${mediaLink}`);
 
-          /// Injection du lien de téléchargement et du nom de l'épisode
+          // Injection du lien de téléchargement et du nom de l'épisode
           downloadLinks.push([link[0], mediaLink]);
         }
       }
 
-      const animeInfo = {
-        animeTitle: animeTitle,
-        animeSeason: animeSeason,
-        lang: useVf ? "VF" : "VOSTFR",
-      };
-      fs.writeFileSync("info.json", JSON.stringify(animeInfo, null, 2));
+      // Crée les répertoires de téléchargement des animés
+      const lang = useVf ? "VF" : "VOSTFR";
+      const animeFolderPath = path.resolve(
+        `Anime/${animeTitle}/${animeSeason}/${lang}`,
+      );
+      fs.mkdirSync(animeFolderPath, { recursive: true });
 
-      // Ecrit tous les liens dans le fichier links.json
-      fs.writeFileSync("links.json", JSON.stringify(downloadLinks, null, 2));
+      if (useMegaCmd) {
+        try {
+          execSync(
+            `mega-mkdir -p "Anime/${animeTitle}/${animeSeason}/${lang}"`,
+            {
+              stdio: "ignore",
+            },
+          );
+        } catch (error) {
+          if (error.status !== 54) {
+            // Status 54: dossier existe déjà
+            console.error(
+              "Erreur lors de la création du dossier sur Mega:",
+              // error,
+            );
+            // throw error; // Relance l'erreur si c'est autre chose
+          } else {
+            console.log(
+              "Le dossier existe déjà sur Mega, poursuite du processus...",
+            );
+          }
+        }
+      }
+
+      // Fonction qui va vérifier si le fichier est déjà présent sur Mega
+      const checkIfFileExistsOnMega = (filePath) => {
+        try {
+          const output = execSync(
+            `mega-ls -a "Anime/${animeTitle}/${animeSeason}/${lang}"`,
+            {
+              stdio: "pipe",
+              shell: "/bin/bash",
+            },
+          ).toString();
+          return output.includes(filePath);
+        } catch (error) {
+          console.error(
+            "Erreur lors de la vérification du fichier sur Mega:",
+            error,
+          );
+          return false;
+        }
+      };
+
+      // Boucle pour télécharger chaque épisode
+      downloadLinks.forEach((item) => {
+        const name = item[0];
+        const link = item[1];
+
+        console.log(`Téléchargement de ${name}... `);
+
+        // Télécharger le fichier
+        execSync(
+          `aria2c -x 16 -d "Anime/${animeTitle}/${animeSeason}/${lang}" -o "${name}.mp4" "${link}" | grep --line-buffered "ETA:"`,
+          {
+            stdio: "inherit",
+            shell: "/bin/bash",
+          },
+        );
+
+        console.log("Téléchargement terminé!");
+
+        // Envoi de l'épisode sur le compte Mega si nécessaire
+        if (useMegaCmd) {
+          console.log(`Transfert de ${name} sur votre compte Mega... `);
+
+          const filePath = `${name}.mp4`;
+          const fileExistsOnMega = checkIfFileExistsOnMega(filePath);
+
+          if (!fileExistsOnMega) {
+            execSync(
+              `mega-put -c "Anime/${animeTitle}/${animeSeason}/${lang}/${filePath}" "Anime/${animeTitle}/${animeSeason}/${lang}"`,
+              {
+                stdio: "inherit",
+                shell: "/bin/bash",
+              },
+            );
+            console.log("Transfert terminé!");
+          } else {
+            console.log(`${name} est déjà présent sur votre compte Mega.`);
+          }
+
+          if (deleteOnFinished) {
+            console.log(`Suppression de ${name} ! `);
+            fs.unlinkSync(
+              `Anime/${animeTitle}/${animeSeason}/${lang}/${filePath}`,
+            );
+          } else {
+            console.log(" ");
+          }
+        }
+      });
+      // Log de fin
+      console.log("Téléchargement et transfert terminés !");
+
+      // Ferme le navigateur Puppeteer
+      await browser.close();
+
+      // Arrête le processus Node.js
+      process.exit(0);
+
       break;
     } catch (err) {
       console.log("Oops, une erreur est survenue : ");
@@ -322,14 +595,3 @@ const fs = require("fs");
     }
   }
 })();
-
-// (
-//   // Fonction auto-executrice
-//
-//   async () => {
-//     await main(page);
-//
-//     // Fermeture du navigateur
-//     browser.close();
-//   },
-// )();

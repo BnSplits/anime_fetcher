@@ -1,43 +1,86 @@
-```markdown
-# Anime Downloader by BananaSplit
+# Anime Downloader
 
-Anime Downloader est un script automatisé pour télécharger des épisodes d'anime en utilisant Puppeteer pour extraire les liens de streaming et Aria2 pour gérer les téléchargements.
+**Anime Downloader** est un script automatisé pour télécharger des épisodes d'animés depuis le site [Anime-sama](https://anime-sama.fr) et les stocker localement ou sur un compte Mega.
 
 ## Prérequis
-- Linux
-- Bash
-- Node.js et npm
-- jq
-- Un gestionnaire de paquets (apt, dnf, ou pacman)
-```
 
-## Installation et utilisation
-```sh
-  ./install.sh
-```
+Avant d'exécuter le script, assurez-vous que les éléments suivants sont installés sur votre système :
 
-### Explications du script
+- [Node.js](https://nodejs.org/) (version LTS recommandée)
+- [npm](https://www.npmjs.com/)
+- [aria2c](https://aria2.github.io/)
+- [mega-cmd](https://github.com/meganz/megacmd) (facultatif, pour le stockage sur Mega)
 
-1. Le script commence par nettoyer les fichiers `links.json` et `info.json`.
-2. Il demande à l'utilisateur de spécifier le gestionnaire de paquets (apt, dnf, pacman) pour installer les dépendances nécessaires (aria2, nodejs, npm, jq, puppeteer, readline-sync).
-3. Ensuite, il exécute le script `script.js` avec Node.js.
+## Installation
 
-### Fonctionnalités du script
+1. **Clonez le dépôt**
 
-- **Recherche d'anime** : Vous pouvez rechercher un anime en entrant son nom.
-- **Choix de la saison** : Le script affiche les saisons et films disponibles et vous permet de choisir celui que vous voulez télécharger.
-- **Choix des épisodes** : Vous pouvez spécifier les épisodes à télécharger.
-- **Téléchargement** : Les liens de téléchargement sont extraits et les épisodes sont téléchargés avec Aria2.
+   Clonez le dépôt GitHub contenant les scripts nécessaires :
 
-### Détails des fichiers
+   ```bash
+   git clone https://github.com/BnSplits/anime_fetcher.git
+   ```
 
-- `anime_fetcher.sh` : Script principal qui gère l'installation des dépendances et l'exécution du script Node.js.
-- `script.js` : Script Node.js qui utilise Puppeteer pour extraire les liens de téléchargement des épisodes.
+2. **Exécutez le script d'installation**
 
-### Note
+   Rendez le script `launch.sh` exécutable et lancez-le pour installer les dépendances et démarrer le script principal :
 
-Assurez-vous que les fichiers `links.json` et `info.json` sont présents dans le répertoire du projet. Le script les utilisera pour stocker temporairement les informations.
+   ```bash
+   chmod +x launch.sh
+   ./launch.sh
+   ```
 
-## Contributeurs
+   Le script `launch.sh` effectuera les opérations suivantes :
+
+   - Vérifie et installe les dépendances npm nécessaires.
+   - Lance le script principal `script.js`.
+
+## Utilisation
+
+Lorsque vous exécutez `launch.sh`, le script `script.js` vous guidera à travers les étapes suivantes :
+
+1. **Choisissez votre gestionnaire de paquets** :
+
+   - Pacman
+   - Apt
+   - Dnf
+
+2. **Configuration de Mega (facultatif)** :
+
+   - Voulez-vous utiliser `mega-cmd` pour stocker les épisodes sur un compte Mega ?
+   - Si oui, le script vous demandera les informations de connexion (email et mot de passe).
+
+3. **Téléchargez les épisodes** :
+
+   - Entrez le nom de l'animé.
+   - Sélectionnez la saison ou le film.
+   - Choisissez les épisodes à télécharger (ex. : 1, 5, 8 ou 1-6 ou A pour tous).
+   - Le script affichera les liens de téléchargement et procédera au téléchargement des épisodes.
+
+4. **Stockage et nettoyage** :
+   - Les épisodes seront téléchargés dans un répertoire local.
+   - Si configuré, les épisodes seront également transférés sur Mega et peuvent être supprimés localement après le transfert.
+
+## Configuration de Mega-cmd
+
+Si vous choisissez d'utiliser `mega-cmd`, le script peut créer des répertoires et télécharger les fichiers sur votre compte Mega. Assurez-vous que `mega-cmd` est correctement installé et configuré avant d'exécuter le script.
+
+## Scripts
+
+- **install.sh** : Script d'installation des dépendances et lancement de `launch.sh`.
+- **launch.sh** : Installe les dépendances npm et exécute le script principal `script.js`.
+- **script.js** : Script principal qui utilise Puppeteer pour automatiser la recherche et le téléchargement des épisodes.
+
+## Notes
+
+- Les erreurs et les logs seront affichés dans la console pour vous aider à diagnostiquer les problèmes.
+- Le script est conçu pour fonctionner en mode sans tête (headless) pour Puppeteer.
+
+## Contribuer
 
 - BananaSplit (@BnSplits)
+  Les contributions sont les bienvenues ! Si vous avez des suggestions ou des améliorations, n'hésitez pas à ouvrir une [issue](https://github.com/BnSplits/anime_fetcher/issues) ou à soumettre une [pull request](https://github.com/BnSplits/anime_fetcher/pulls).
+
+## License
+
+Ce projet est sous [la licence MIT](LICENSE).
