@@ -67,30 +67,30 @@ import gradient from "gradient-string";
   // Introduction
   console.log(
     gradient.pastel.multiline(
-      `### Anime downloader by BananaSplit ###\n--- Utilisation du site https://anime-sama.fr ---`,
-    ),
+      `### Anime downloader by BananaSplit ###\n--- Utilisation du site https://anime-sama.fr ---`
+    )
   );
 
   // Demande à l'utilisateur son gestionnaire de paquets
   const packageManager = await Select(
     "Quel gestionnaire de paquets utilisez-vous ?",
     [
-      { name: "Pacman", value: "Pacman", description: false },
       { name: "Apt", value: "Apt", description: false },
+      { name: "Pacman", value: "Pacman", description: false },
       { name: "Dnf", value: "Dnf", description: false },
-    ],
+    ]
   );
 
   // Demande à l'utilisateur s'il veut utiliser mega-cmd
   const useMegaCmd = await Confirm(
-    "Voulez-vous utiliser mega-cmd pour stocker vos épisodes sur un compte Mega ?",
+    "Voulez-vous utiliser mega-cmd pour stocker vos épisodes sur un compte Mega ?"
   );
 
   // Demande si mega-cmd est déja configurer
   let isMegaConfigured;
   if (useMegaCmd) {
     isMegaConfigured = await Confirm(
-      "Avez-vous déjà configuré mega-cmd avec votre compte ?",
+      "Avez-vous déjà configuré mega-cmd avec votre compte ?"
     );
   }
 
@@ -99,16 +99,16 @@ import gradient from "gradient-string";
   let megaPsw;
   if (useMegaCmd && !isMegaConfigured) {
     megaMail = await Input(
-      "Veuillez entrer l'adresse mail de votre compte Mega",
+      "Veuillez entrer l'adresse mail de votre compte Mega"
     );
     megaPsw = await Input(
-      "Veuillez entrer le mot de passe de votre compte Mega ",
+      "Veuillez entrer le mot de passe de votre compte Mega "
     );
   }
 
   // Demande à l'utilisateur s'il veut supprimer chaque épisode après le téléchargement
   const deleteOnFinished = await Confirm(
-    "Voulez-vous supprimer chaque épisode une fois téléchargé et envoyé sur Mega ?",
+    "Voulez-vous supprimer chaque épisode une fois téléchargé et envoyé sur Mega ?"
   );
 
   // Fonction pour installer les dépendances selon le gestionnaire de paquets
@@ -187,7 +187,7 @@ import gradient from "gradient-string";
     } catch (error) {
       console.error(
         "Erreur lors de la configuration de mega-cmd :",
-        error.message,
+        error.message
       );
     }
   }
@@ -242,7 +242,7 @@ import gradient from "gradient-string";
           // Recupere le nombre de saisons et films
           availableSeasonsLength = await page.$eval(
             seasonMenu,
-            (el) => el.children.length - 1,
+            (el) => el.children.length - 1
           );
 
           // Crée la liste des saisons et films
@@ -251,14 +251,14 @@ import gradient from "gradient-string";
             availableSeasonsName.push(
               await page.$eval(
                 `${seasonMenu} > a:nth-child(${ep}) > div`,
-                (el) => el.textContent,
-              ),
+                (el) => el.textContent
+              )
             );
             availableSeasonsLinks.push(
               await page.$eval(
                 `${seasonMenu} > a:nth-child(${ep})`,
-                (el) => el.href,
-              ),
+                (el) => el.href
+              )
             );
           }
           break;
@@ -277,13 +277,13 @@ import gradient from "gradient-string";
       });
       let selectedSeason = await Select(
         "Veuillez choisir la saison / le film",
-        seasonsChoices,
+        seasonsChoices
       );
 
       const searchAnimeSeasonSpinner = createSpinner("Patientez...").start();
       const goToSeason = await page.goto(
         availableSeasonsLinks[availableSeasonsName.indexOf(selectedSeason)],
-        { waitUntil: "networkidle0" },
+        { waitUntil: "networkidle0" }
       );
 
       if (goToSeason && goToSeason.ok()) {
@@ -297,12 +297,12 @@ import gradient from "gradient-string";
       // Demande de choisir entre VF et VOSTFR si la VF est disponible
       let useVf = false;
       let isVfAvailable = await page.$eval("#switchVF", (el) =>
-        el.checkVisibility(),
+        el.checkVisibility()
       );
       if (isVfAvailable) {
         useVf = await Confirm(
           "La version VF est disponible ! Voulez-vous la sélectionner ?",
-          false,
+          false
         );
       }
 
@@ -312,7 +312,7 @@ import gradient from "gradient-string";
           availableSeasonsLinks[selectedSeason - 1].replace("vostfr", "vf"),
           {
             waitUntil: "networkidle0",
-          },
+          }
         );
       }
 
@@ -322,11 +322,11 @@ import gradient from "gradient-string";
 
       const readerOptions = await page.$$eval(
         "#selectLecteurs > option",
-        (options) => options.map((option) => option.value),
+        (options) => options.map((option) => option.value)
       );
       const episodeCount = await page.$$eval(
         "#selectEpisodes > option",
-        (options) => options.length,
+        (options) => options.length
       );
 
       // Affiche le nombre d'épisodes disponibles
@@ -335,7 +335,7 @@ import gradient from "gradient-string";
       // Choix des épisodes à télécharger
       const episodesInput = await Input(
         "Entrez les épisodes à télécharger (ex: 1, 5, 8 ou 1-6 ou A pour tous)",
-        "All",
+        "All"
       );
 
       // Formattage des épisodes choisis
@@ -370,7 +370,7 @@ import gradient from "gradient-string";
         for (let reader of readerOptions) {
           await page.select("#selectLecteurs", reader);
           const src = await page.$eval("#playerDF", (el) =>
-            el.getAttribute("src"),
+            el.getAttribute("src")
           );
 
           // Modifie le numero du nom de l'épisode
@@ -434,14 +434,14 @@ import gradient from "gradient-string";
 
           // Active le preload de la video
           await page.$eval("#video_html5_wrapper_html5_api", (el) =>
-            el.setAttribute("preload", true),
+            el.setAttribute("preload", true)
           );
 
           // Surveille les requetes réseau
           const response = await page.waitForResponse(
             (response) =>
               response.request().resourceType() === "media" &&
-              response.status() === 206,
+              response.status() === 206
           );
 
           // Récupération du lien du média
@@ -460,14 +460,14 @@ import gradient from "gradient-string";
 
           // Active le preload de la video
           await page.$eval("#video-js-video_html5_api", (el) =>
-            el.setAttribute("preload", true),
+            el.setAttribute("preload", true)
           );
 
           // Surveille les requetes réseau
           const response = await page.waitForResponse(
             (response) =>
               response.request().resourceType() === "media" &&
-              response.status() === 206,
+              response.status() === 206
           );
 
           // Récupération du lien du média
@@ -482,7 +482,7 @@ import gradient from "gradient-string";
       // Crée les répertoires de téléchargement des animés
       const lang = useVf ? "VF" : "VOSTFR";
       const animeFolderPath = path.resolve(
-        `Anime/${animeTitle}/${animeSeason}/${lang}`,
+        `Anime/${animeTitle}/${animeSeason}/${lang}`
       );
       fs.mkdirSync(animeFolderPath, { recursive: true });
 
@@ -492,19 +492,19 @@ import gradient from "gradient-string";
             `mega-mkdir -p "Anime/${animeTitle}/${animeSeason}/${lang}"`,
             {
               stdio: "ignore",
-            },
+            }
           );
         } catch (error) {
           if (error.status !== 54) {
             // Status 54: dossier existe déjà
             console.error(
-              "Erreur lors de la création du dossier sur Mega:",
+              "Erreur lors de la création du dossier sur Mega:"
               // error,
             );
             // throw error; // Relance l'erreur si c'est autre chose
           } else {
             console.log(
-              "Le dossier existe déjà sur Mega, poursuite du processus...",
+              "Le dossier existe déjà sur Mega, poursuite du processus..."
             );
           }
         }
@@ -518,13 +518,13 @@ import gradient from "gradient-string";
             {
               stdio: "pipe",
               shell: "/bin/bash",
-            },
+            }
           ).toString();
           return output.includes(filePath);
         } catch (error) {
           console.error(
             "Erreur lors de la vérification du fichier sur Mega:",
-            error,
+            error
           );
           return false;
         }
@@ -543,7 +543,7 @@ import gradient from "gradient-string";
           {
             stdio: "inherit",
             shell: "/bin/bash",
-          },
+          }
         );
 
         console.log("Téléchargement terminé!");
@@ -561,7 +561,7 @@ import gradient from "gradient-string";
               {
                 stdio: "inherit",
                 shell: "/bin/bash",
-              },
+              }
             );
             console.log("Transfert terminé!");
           } else {
@@ -571,7 +571,7 @@ import gradient from "gradient-string";
           if (deleteOnFinished) {
             console.log(`Suppression de ${name} ! `);
             fs.unlinkSync(
-              `Anime/${animeTitle}/${animeSeason}/${lang}/${filePath}`,
+              `Anime/${animeTitle}/${animeSeason}/${lang}/${filePath}`
             );
           } else {
             console.log(" ");
