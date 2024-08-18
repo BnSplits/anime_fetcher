@@ -334,7 +334,7 @@ import gradient from "gradient-string";
 
       // Choix des épisodes à télécharger
       const episodesInput = await Input(
-        "Entrez les épisodes à télécharger (ex: 1, 5, 8 ou 1-6 ou A pour tous)",
+        "Entrez les épisodes à télécharger (ex: 1,5,8 ou 1-6 ou A pour tous)",
         "All"
       );
 
