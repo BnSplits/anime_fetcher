@@ -309,7 +309,7 @@ import gradient from "gradient-string";
       // Redirige vers la page de la VF
       if (useVf) {
         await page.goto(
-          availableSeasonsLinks[selectedSeason - 1].replace("vostfr", "vf"),
+          availableSeasonsLinks[availableSeasonsName.indexOf(selectedSeason)].replace("vostfr", "vf"),
           {
             waitUntil: "networkidle0",
           }
