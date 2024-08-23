@@ -212,7 +212,7 @@ import gradient from "gradient-string";
       page.setDefaultNavigationTimeout(120000);
 
       const url = `https://anime-sama.fr/catalogue/${name}/`;
-      await page.goto(url, { waitUntil: "networkidle0" });
+      await page.goto(url, { waitUntil: "networkidle2" });
 
       // Vérification si la page existe en regardant le titre de la page
       const title = await page.title();
@@ -283,7 +283,7 @@ import gradient from "gradient-string";
       const searchAnimeSeasonSpinner = createSpinner("Patientez...").start();
       const goToSeason = await page.goto(
         availableSeasonsLinks[availableSeasonsName.indexOf(selectedSeason)],
-        { waitUntil: "networkidle0" }
+        { waitUntil: "networkidle2" }
       );
 
       if (goToSeason && goToSeason.ok()) {
@@ -311,7 +311,7 @@ import gradient from "gradient-string";
         await page.goto(
           availableSeasonsLinks[availableSeasonsName.indexOf(selectedSeason)].replace("vostfr", "vf"),
           {
-            waitUntil: "networkidle0",
+            waitUntil: "networkidle2",
           }
         );
       }
@@ -430,7 +430,7 @@ import gradient from "gradient-string";
       // Redirection et copie des liens de téléchargement (sibnet)
       if (sibnet_redirected_links.length !== 0) {
         for (let link of sibnet_redirected_links) {
-          await page.goto(link[1], { waitUntil: "networkidle0" });
+          await page.goto(link[1], { waitUntil: "networkidle2" });
 
           // Active le preload de la video
           await page.$eval("#video_html5_wrapper_html5_api", (el) =>
@@ -456,7 +456,7 @@ import gradient from "gradient-string";
       // Redirection et copie des liens de téléchargement (Sendvid)
       if (sendvid_redirected_links.length !== 0) {
         for (let link of sendvid_redirected_links) {
-          await page.goto(link[1], { waitUntil: "networkidle0" });
+          await page.goto(link[1], { waitUntil: "networkidle2" });
 
           // Active le preload de la video
           await page.$eval("#video-js-video_html5_api", (el) =>
