@@ -28,6 +28,7 @@ import gradient from "gradient-string";
       pageSize: 999,
       theme: {
         prefix: "=>",
+        spinner: "...",
         icon: {
           cursor: " >",
         },
