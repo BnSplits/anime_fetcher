@@ -1,4 +1,4 @@
-/node_modules
-/Anime
-package-lock.json
-yarn.lock
+src/node_modules
+src/Animes
+src/package-lock.json
+src/yarn.lock

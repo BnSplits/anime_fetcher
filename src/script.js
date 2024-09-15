@@ -1,5 +1,6 @@
 import { execSync } from "child_process";
 import fs from "fs";
+import { parse } from "jsonc-parser";
 import path from "path";
 import puppeteer from "puppeteer";
 import { input, select } from "@inquirer/prompts";
@@ -72,115 +73,33 @@ import gradient from "gradient-string";
     )
   );
 
-  // Demande à l'utilisateur son gestionnaire de paquets
-  const packageManager = await Select(
-    "Quel gestionnaire de paquets utilisez-vous ?",
-    [
-      { name: "Apt", value: "Apt", description: false },
-      { name: "Pacman", value: "Pacman", description: false },
-      { name: "Dnf", value: "Dnf", description: false },
-    ]
+  // Demande à l'utilisateur s'il veut avoir les épisodes aussi en local sur `/home/Animes`
+  const saveLocally = await Confirm(
+    "Voulez-vous conservé les épisodes téléchargés en local (/home/Animes/) ?"
   );
 
-  // Demande à l'utilisateur s'il veut utiliser mega-cmd
-  const useMegaCmd = await Confirm(
-    "Voulez-vous utiliser mega-cmd pour stocker vos épisodes sur un compte Mega ?"
-  );
+  // Recupère les infos de connexion au compte mega dans le fichier `infos.json`
+  const __dirname = path.dirname(new URL(import.meta.url).pathname);
+  const infosFilePath = path.resolve(__dirname, "../infos.jsonc");
 
-  // Demande si mega-cmd est déja configurer
-  let isMegaConfigured;
-  if (useMegaCmd) {
-    isMegaConfigured = await Confirm(
-      "Avez-vous déjà configuré mega-cmd avec votre compte ?"
-    );
-  }
-
-  // Demande à l'utilisateur ses infos de compte s'il n'a pas encore configuré mega-cmd
   let megaMail;
   let megaPsw;
-  if (useMegaCmd && !isMegaConfigured) {
-    megaMail = await Input(
-      "Veuillez entrer l'adresse mail de votre compte Mega"
-    );
-    megaPsw = await Input(
-      "Veuillez entrer le mot de passe de votre compte Mega "
-    );
-  }
 
-  // Demande à l'utilisateur s'il veut supprimer chaque épisode après le téléchargement
-  const deleteOnFinished = await Confirm(
-    "Voulez-vous supprimer chaque épisode une fois téléchargé et envoyé sur Mega ?"
-  );
-
-  // Fonction pour installer les dépendances selon le gestionnaire de paquets
-  const installDependencies = (command) => {
-    execSync(command, { shell: "/bin/bash", stdio: "inherit" });
-    console.log("Installation terminée.");
-  };
-
-  // Commandes pour l'installation des dépendances selon le gestionnaire de paquets
-  const installCommands = {
-    Pacman: `
-      echo "Installation des dépendances..."
-      for pkg in aria2 ; do
-          if ! pacman -Qi $pkg >/dev/null 2>&1; then
-              sudo pacman -S --noconfirm $pkg >/dev/null 2>&1
-          fi
-      done
-
-      if [[ ${useMegaCmd} ]]; then
-          if ! pacman -Qi mega-cmd >/dev/null 2>&1; then
-              wget https://mega.nz/linux/repo/Arch_Extra/x86_64/megacmd-x86_64.pkg.tar.zst >/dev/null 2>&1 && sudo pacman -U --noconfirm "megacmd-x86_64.pkg.tar.zst" >/dev/null 2>&1 && rm -rf megacmd-x86_64*
-          fi
-      fi
-    `,
-    Apt: `
-      echo "Installation des dépendances..."
-      sudo apt-get update -qq
-      for pkg in aria2 ; do
-          if ! dpkg -l | grep -q $pkg; then
-              sudo apt-get install -y $pkg >/dev/null 2>&1
-          fi
-      done
-
-      sudo apt-get install -y libx11-xcb1 libxcomposite1 libasound2 libatk1.0-0 libatk-bridge2.0-0 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgbm1 libgcc1 libglib2.0-0 libgtk-3-0 libnspr4 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 >/dev/null 2>&1
-
-      if [[ ${useMegaCmd} ]]; then
-          if ! dpkg -l | grep -q mega-cmd; then
-              echo "Installation de mega-cmd..."
-              wget https://mega.nz/linux/repo/xUbuntu_20.04/amd64/megacmd-xUbuntu_20.04_amd64.deb >/dev/null 2>&1 && sudo apt install -y "$PWD/megacmd-xUbuntu_20.04_amd64.deb" >/dev/null 2>&1 && rm megacmd-xUbuntu*
-          fi
-      fi
-    `,
-    Dnf: `
-      echo "Installation des dépendances..."
-      for pkg in aria2 ; do
-          if ! rpm -q $pkg >/dev/null 2>&1; then
-              sudo dnf install -y $pkg >/dev/null 2>&1
-          fi
-      done
-
-      if [[ ${useMegaCmd} ]]; then
-          if ! rpm -q mega-cmd >/dev/null 2>&1; then
-              sudo dnf install -y mega-cmd >/dev/null 2>&1
-          fi
-      fi
-    `,
-  };
-
-  // Installer les paquets en fonction du gestionnaire de paquets
-  if (installCommands[packageManager]) {
-    installDependencies(installCommands[packageManager]);
-  } else {
-    console.error("Gestionnaire de paquets inconnu");
+  try {
+    const data = fs.readFileSync(infosFilePath, "utf8");
+    const infos = parse(data); // Utilise jsonc-parser pour lire le fichier JSONC
+    megaMail = infos.mail;
+    megaPsw = infos.psw;
+  } catch (err) {
+    console.error("Erreur:", err);
   }
 
   // Configure mega-cmd
-  if (useMegaCmd && !isMegaConfigured && megaMail && megaPsw) {
+  if (megaMail && megaPsw) {
     console.log("Configuration de votre compte mega...");
 
     try {
-      execSync(`mega-logout && mega-login ${megaMail} ${megaPsw}`, {
+      execSync(`mega-login ${megaMail} ${megaPsw}`, {
         shell: "/bin/bash",
         stdio: "inherit",
       });
@@ -310,7 +229,9 @@ import gradient from "gradient-string";
       // Redirige vers la page de la VF
       if (useVf) {
         await page.goto(
-          availableSeasonsLinks[availableSeasonsName.indexOf(selectedSeason)].replace("vostfr", "vf"),
+          availableSeasonsLinks[
+            availableSeasonsName.indexOf(selectedSeason)
+          ].replace("vostfr", "vf"),
           {
             waitUntil: "networkidle2",
           }
@@ -483,31 +404,29 @@ import gradient from "gradient-string";
       // Crée les répertoires de téléchargement des animés
       const lang = useVf ? "VF" : "VOSTFR";
       const animeFolderPath = path.resolve(
-        `Anime/${animeTitle}/${animeSeason}/${lang}`
+        `/app/src/Animes/${animeTitle}/${animeSeason}/${lang}`
       );
       fs.mkdirSync(animeFolderPath, { recursive: true });
 
-      if (useMegaCmd) {
-        try {
-          execSync(
-            `mega-mkdir -p "Anime/${animeTitle}/${animeSeason}/${lang}"`,
-            {
-              stdio: "ignore",
-            }
-          );
-        } catch (error) {
-          if (error.status !== 54) {
-            // Status 54: dossier existe déjà
-            console.error(
-              "Erreur lors de la création du dossier sur Mega:"
-              // error,
-            );
-            // throw error; // Relance l'erreur si c'est autre chose
-          } else {
-            console.log(
-              "Le dossier existe déjà sur Mega, poursuite du processus..."
-            );
+      try {
+        execSync(
+          `mega-mkdir -p "Animes/${animeTitle}/${animeSeason}/${lang}"`,
+          {
+            stdio: "ignore",
           }
+        );
+      } catch (error) {
+        if (error.status !== 54) {
+          // Status 54: dossier existe déjà
+          console.error(
+            "Erreur lors de la création du dossier sur Mega:"
+            // error,
+          );
+          // throw error; // Relance l'erreur si c'est autre chose
+        } else {
+          console.log(
+            "Le dossier existe déjà sur Mega, poursuite du processus..."
+          );
         }
       }
 
@@ -515,7 +434,7 @@ import gradient from "gradient-string";
       const checkIfFileExistsOnMega = (filePath) => {
         try {
           const output = execSync(
-            `mega-ls -a "Anime/${animeTitle}/${animeSeason}/${lang}"`,
+            `mega-ls -a "Animes/${animeTitle}/${animeSeason}/${lang}"`,
             {
               stdio: "pipe",
               shell: "/bin/bash",
@@ -540,7 +459,7 @@ import gradient from "gradient-string";
 
         // Télécharger le fichier
         execSync(
-          `aria2c -x 16 -d "Anime/${animeTitle}/${animeSeason}/${lang}" -o "${name}.mp4" "${link}" | grep --line-buffered "ETA:"`,
+          `aria2c -x 16 -d "/app/src/Animes/${animeTitle}/${animeSeason}/${lang}" -o "${name}.mp4" "${link}" | grep --line-buffered "ETA:"`,
           {
             stdio: "inherit",
             shell: "/bin/bash",
@@ -550,33 +469,31 @@ import gradient from "gradient-string";
         console.log("Téléchargement terminé!");
 
         // Envoi de l'épisode sur le compte Mega si nécessaire
-        if (useMegaCmd) {
-          console.log(`Transfert de ${name} sur votre compte Mega... `);
+        console.log(`Transfert de ${name} sur votre compte Mega... `);
 
-          const filePath = `${name}.mp4`;
-          const fileExistsOnMega = checkIfFileExistsOnMega(filePath);
+        const filePath = `${name}.mp4`;
+        const fileExistsOnMega = checkIfFileExistsOnMega(filePath);
 
-          if (!fileExistsOnMega) {
-            execSync(
-              `mega-put -c "Anime/${animeTitle}/${animeSeason}/${lang}/${filePath}" "Anime/${animeTitle}/${animeSeason}/${lang}"`,
-              {
-                stdio: "inherit",
-                shell: "/bin/bash",
-              }
-            );
-            console.log("Transfert terminé!");
-          } else {
-            console.log(`${name} est déjà présent sur votre compte Mega.`);
-          }
+        if (!fileExistsOnMega) {
+          execSync(
+            `mega-put -c "/app/src/Animes/${animeTitle}/${animeSeason}/${lang}/${filePath}" "Animes/${animeTitle}/${animeSeason}/${lang}"`,
+            {
+              stdio: "inherit",
+              shell: "/bin/bash",
+            }
+          );
+          console.log("Transfert terminé!");
+        } else {
+          console.log(`${name} est déjà présent sur votre compte Mega.`);
+        }
 
-          if (deleteOnFinished) {
-            console.log(`Suppression de ${name} ! `);
-            fs.unlinkSync(
-              `Anime/${animeTitle}/${animeSeason}/${lang}/${filePath}`
-            );
-          } else {
-            console.log(" ");
-          }
+        if (!saveLocally) {
+          console.log(`Suppression de ${name} ! `);
+          fs.unlinkSync(
+            `/app/src/Animes/${animeTitle}/${animeSeason}/${lang}/${filePath}`
+          );
+        } else {
+          console.log(" ");
         }
       });
       // Log de fin
@@ -587,8 +504,6 @@ import gradient from "gradient-string";
 
       // Arrête le processus Node.js
       process.exit(0);
-
-      break;
     } catch (err) {
       console.log("Oops, une erreur est survenue : ");
       console.error(err);

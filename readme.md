@@ -1,86 +1,66 @@
-# Anime Downloader
+# Anime Fetcher
 
-**Anime Downloader** est un script automatisé pour télécharger des épisodes d'animés depuis le site [Anime-sama](https://anime-sama.fr) et les stocker localement ou sur un compte Mega.
+Anime Fetcher est un programme de téléchargement d'animés utilisant Puppeteer pour récupérer les épisodes depuis le site [anime-sama.fr](https://anime-sama.fr) et Mega pour stocker les fichiers.
 
 ## Prérequis
 
-Avant d'exécuter le script, assurez-vous que les éléments suivants sont installés sur votre système :
+Avant de commencer, assurez-vous d'avoir les éléments suivants installés sur votre machine :
 
-- [Node.js](https://nodejs.org/) (version LTS recommandée)
-- [npm](https://www.npmjs.com/)
-- [aria2c](https://aria2.github.io/)
-- [mega-cmd](https://github.com/meganz/megacmd) (facultatif, pour le stockage sur Mega)
+- **Docker**
+- **Docker Buildx**
 
 ## Installation
 
-1. **Clonez le dépôt**
-
-   Clonez le dépôt GitHub contenant les scripts nécessaires :
+1. **Cloner le dépôt :**
 
    ```bash
    git clone https://github.com/BnSplits/anime_fetcher.git
+   cd anime_fetcher
    ```
 
-2. **Exécutez le script d'installation**
+2. **Préparer le fichier de configuration :**
 
-   Rendez le script `launch.sh` exécutable et lancez-le pour installer les dépendances et démarrer le script principal :
+   Avant de construire l'image Docker, vous devez créer un fichier de configuration `infos.jsonc` avec vos informations de connexion MEGA. Placez ce fichier à la racine du projet avec le contenu suivant :
+
+   ```jsonc
+   {
+     "mail": "ton-adresse@mail.com",
+     "psw": "ton-mot-de-passe"
+   }
+   ```
+
+3. **Construire l'image Docker :**
+
+   Utilisez le script `build-docker.sh` pour construire l'image Docker :
 
    ```bash
-   chmod +x launch.sh
-   ./launch.sh
+   ./build-docker.sh
    ```
 
-   Le script `launch.sh` effectuera les opérations suivantes :
-
-   - Vérifie et installe les dépendances npm nécessaires.
-   - Lance le script principal `script.js`.
+   Ce script utilise Docker Buildx pour créer l'image avec le tag `anime-fetcher-docker:latest`.
 
 ## Utilisation
 
-Lorsque vous exécutez `launch.sh`, le script `script.js` vous guidera à travers les étapes suivantes :
+1. **Lancer le conteneur Docker :**
 
-1. **Choisissez votre gestionnaire de paquets** :
+   Avant de lancer le conteneur, assurez-vous que le fichier de configuration `infos.jsonc` est présent. Utilisez le script `launch-docker.sh` pour démarrer le conteneur :
 
-   - Pacman
-   - Apt
-   - Dnf
+   ```bash
+   ./launch-docker.sh
+   ```
 
-2. **Configuration de Mega (facultatif)** :
+   Ce script vérifie la présence du répertoire local pour les épisodes (`~/Animes`) et du fichier de configuration. Il montera ces éléments dans le conteneur et exécutera le programme.
 
-   - Voulez-vous utiliser `mega-cmd` pour stocker les épisodes sur un compte Mega ?
-   - Si oui, le script vous demandera les informations de connexion (email et mot de passe).
+2. **Interaction avec le programme :**
 
-3. **Téléchargez les épisodes** :
+   Le programme vous guidera à travers les étapes suivantes :
 
-   - Entrez le nom de l'animé.
-   - Sélectionnez la saison ou le film.
-   - Choisissez les épisodes à télécharger (ex. : 1, 5, 8 ou 1-6 ou A pour tous).
-   - Le script affichera les liens de téléchargement et procédera au téléchargement des épisodes.
+   - Entrée du nom de l'anime que vous souhaitez télécharger.
+   - Sélection de la saison ou du film.
+   - Choix entre VF et VOSTFR (si disponible).
+   - Sélection des épisodes à télécharger.
+   - Choix de conserver les épisodes en local ou uniquement sur Mega.
 
-4. **Stockage et nettoyage** :
-   - Les épisodes seront téléchargés dans un répertoire local.
-   - Si configuré, les épisodes seront également transférés sur Mega et peuvent être supprimés localement après le transfert.
+## Licence
 
-## Configuration de Mega-cmd
-
-Si vous choisissez d'utiliser `mega-cmd`, le script peut créer des répertoires et télécharger les fichiers sur votre compte Mega. Assurez-vous que `mega-cmd` est correctement installé et configuré avant d'exécuter le script.
-
-## Scripts
-
-- **install.sh** : Script d'installation des dépendances et lancement de `launch.sh`.
-- **launch.sh** : Installe les dépendances npm et exécute le script principal `script.js`.
-- **script.js** : Script principal qui utilise Puppeteer pour automatiser la recherche et le téléchargement des épisodes.
-
-## Notes
-
-- Les erreurs et les logs seront affichés dans la console pour vous aider à diagnostiquer les problèmes.
-- Le script est conçu pour fonctionner en mode sans tête (headless) pour Puppeteer.
-
-## Contribuer
-
-- BananaSplit (@BnSplits)
-  Les contributions sont les bienvenues ! Si vous avez des suggestions ou des améliorations, n'hésitez pas à ouvrir une [issue](https://github.com/BnSplits/anime_fetcher/issues) ou à soumettre une [pull request](https://github.com/BnSplits/anime_fetcher/pulls).
-
-## License
-
-Ce projet est sous [la licence MIT](LICENSE).
+Ce projet est sous licence [MIT](https://opensource.org/licenses/MIT).
