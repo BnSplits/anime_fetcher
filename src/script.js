@@ -471,7 +471,7 @@ import gradient from "gradient-string";
 
         // Télécharger le fichier
         execSync(
-          `aria2c -x 16 -d "/app/src/Animes/${animeTitle}/${animeSeason}/${lang}" -o "${name}.mp4" "${link}" | grep --line-buffered "ETA:"`,
+          `aria2c -x 16 -d "/app/src/Animes/${animeTitle}/${animeSeason}/${lang}" -o "${name}.mp4" "${link}" | grep --line-buffered "ETA:" | sed "s/^/${name} - /"`,
           {
             stdio: "inherit",
             shell: "/bin/bash",
@@ -480,11 +480,10 @@ import gradient from "gradient-string";
 
         console.log("Téléchargement terminé!");
 
-        // Envoi de l'épisode sur le compte Mega si nécessaire
-        console.log(`Transfert de ${name} sur votre compte Mega... `);
-
         const filePath = `${name}.mp4`;
         if (sendToMega) {
+          // Envoi de l'épisode sur le compte Mega si nécessaire
+          console.log(`Transfert de ${name} sur votre compte Mega... `);
           const fileExistsOnMega = checkIfFileExistsOnMega(filePath);
 
           if (!fileExistsOnMega) {
