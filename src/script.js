@@ -75,40 +75,52 @@ import gradient from "gradient-string";
 
   // Demande à l'utilisateur s'il veut avoir les épisodes aussi en local sur `/home/Animes`
   const saveLocally = await Confirm(
-    "Voulez-vous conservé les épisodes téléchargés en local (/home/Animes/) ?"
+    "Voulez-vous conservé les épisodes téléchargés en local (/home/Animes/) ?",
+    (def = "no")
   );
 
-  // Recupère les infos de connexion au compte mega dans le fichier `infos.json`
-  const __dirname = path.dirname(new URL(import.meta.url).pathname);
-  const infosFilePath = path.resolve(__dirname, "../infos.jsonc");
-
-  let megaMail;
-  let megaPsw;
-
-  try {
-    const data = fs.readFileSync(infosFilePath, "utf8");
-    const infos = parse(data); // Utilise jsonc-parser pour lire le fichier JSONC
-    megaMail = infos.mail;
-    megaPsw = infos.psw;
-  } catch (err) {
-    console.error("Erreur:", err);
+  // Demande à l'utilisateur s'il veut avoir les tléchargements envoyés sur MEGA
+  let sendToMega = true;
+  if (saveLocally) {
+    sendToMega = await Confirm(
+      "Voulez-vous envoyés vos épisodes sur votre compte Mega ?",
+      (def = "no")
+    );
   }
 
-  // Configure mega-cmd
-  if (megaMail && megaPsw) {
-    console.log("Configuration de votre compte mega...");
+  if (sendToMega) {
+    // Recupère les infos de connexion au compte mega dans le fichier `infos.json`
+    const __dirname = path.dirname(new URL(import.meta.url).pathname);
+    const infosFilePath = path.resolve(__dirname, "../infos.jsonc");
+
+    let megaMail;
+    let megaPsw;
 
     try {
-      execSync(`mega-login ${megaMail} ${megaPsw}`, {
-        shell: "/bin/bash",
-        stdio: "inherit",
-      });
-      console.log("Configuration réussie de votre compte mega.");
-    } catch (error) {
-      console.error(
-        "Erreur lors de la configuration de mega-cmd :",
-        error.message
-      );
+      const data = fs.readFileSync(infosFilePath, "utf8");
+      const infos = parse(data); // Utilise jsonc-parser pour lire le fichier JSONC
+      megaMail = infos.mail;
+      megaPsw = infos.psw;
+    } catch (err) {
+      console.error("Erreur:", err);
+    }
+
+    // Configure mega-cmd
+    if (megaMail && megaPsw) {
+      console.log("Configuration de votre compte mega...");
+
+      try {
+        execSync(`mega-login ${megaMail} ${megaPsw}`, {
+          shell: "/bin/bash",
+          stdio: "inherit",
+        });
+        console.log("Configuration réussie de votre compte mega.");
+      } catch (error) {
+        console.error(
+          "Erreur lors de la configuration de mega-cmd :",
+          error.message
+        );
+      }
     }
   }
 
@@ -408,47 +420,51 @@ import gradient from "gradient-string";
       );
       fs.mkdirSync(animeFolderPath, { recursive: true });
 
-      try {
-        execSync(
-          `mega-mkdir -p "Animes/${animeTitle}/${animeSeason}/${lang}"`,
-          {
-            stdio: "ignore",
-          }
-        );
-      } catch (error) {
-        if (error.status !== 54) {
-          // Status 54: dossier existe déjà
-          console.error(
-            "Erreur lors de la création du dossier sur Mega:"
-            // error,
-          );
-          // throw error; // Relance l'erreur si c'est autre chose
-        } else {
-          console.log(
-            "Le dossier existe déjà sur Mega, poursuite du processus..."
-          );
-        }
-      }
-
-      // Fonction qui va vérifier si le fichier est déjà présent sur Mega
-      const checkIfFileExistsOnMega = (filePath) => {
+      let checkIfFileExistsOnMega;
+      if (sendToMega) {
+        // Crée le dossier de l'animé s'il n'existe pas sur Mega
         try {
-          const output = execSync(
-            `mega-ls -a "Animes/${animeTitle}/${animeSeason}/${lang}"`,
+          execSync(
+            `mega-mkdir -p "Animes/${animeTitle}/${animeSeason}/${lang}"`,
             {
-              stdio: "pipe",
-              shell: "/bin/bash",
+              stdio: "ignore",
             }
-          ).toString();
-          return output.includes(filePath);
-        } catch (error) {
-          console.error(
-            "Erreur lors de la vérification du fichier sur Mega:",
-            error
           );
-          return false;
+        } catch (error) {
+          if (error.status !== 54) {
+            // Status 54: dossier existe déjà
+            console.error(
+              "Erreur lors de la création du dossier sur Mega:"
+              // error,
+            );
+            // throw error; // Relance l'erreur si c'est autre chose
+          } else {
+            console.log(
+              "Le dossier existe déjà sur Mega, poursuite du processus..."
+            );
+          }
         }
-      };
+
+        // Fonction qui va vérifier si le fichier est déjà présent sur Mega
+        checkIfFileExistsOnMega = (filePath) => {
+          try {
+            const output = execSync(
+              `mega-ls -a "Animes/${animeTitle}/${animeSeason}/${lang}"`,
+              {
+                stdio: "pipe",
+                shell: "/bin/bash",
+              }
+            ).toString();
+            return output.includes(filePath);
+          } catch (error) {
+            console.error(
+              "Erreur lors de la vérification du fichier sur Mega:",
+              error
+            );
+            return false;
+          }
+        };
+      }
 
       // Boucle pour télécharger chaque épisode
       downloadLinks.forEach((item) => {
@@ -472,19 +488,21 @@ import gradient from "gradient-string";
         console.log(`Transfert de ${name} sur votre compte Mega... `);
 
         const filePath = `${name}.mp4`;
-        const fileExistsOnMega = checkIfFileExistsOnMega(filePath);
+        if (sendToMega) {
+          const fileExistsOnMega = checkIfFileExistsOnMega(filePath);
 
-        if (!fileExistsOnMega) {
-          execSync(
-            `mega-put -c "/app/src/Animes/${animeTitle}/${animeSeason}/${lang}/${filePath}" "Animes/${animeTitle}/${animeSeason}/${lang}"`,
-            {
-              stdio: "inherit",
-              shell: "/bin/bash",
-            }
-          );
-          console.log("Transfert terminé!");
-        } else {
-          console.log(`${name} est déjà présent sur votre compte Mega.`);
+          if (!fileExistsOnMega) {
+            execSync(
+              `mega-put -c "/app/src/Animes/${animeTitle}/${animeSeason}/${lang}/${filePath}" "Animes/${animeTitle}/${animeSeason}/${lang}"`,
+              {
+                stdio: "inherit",
+                shell: "/bin/bash",
+              }
+            );
+            console.log("Transfert terminé!");
+          } else {
+            console.log(`${name} est déjà présent sur votre compte Mega.`);
+          }
         }
 
         if (!saveLocally) {
