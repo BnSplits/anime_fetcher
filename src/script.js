@@ -75,16 +75,14 @@ import gradient from "gradient-string";
 
   // Demande à l'utilisateur s'il veut avoir les épisodes aussi en local sur `/home/Animes`
   const saveLocally = await Confirm(
-    "Voulez-vous conservé les épisodes téléchargés en local (/home/Animes/) ?",
-    (def = "no")
+    "Voulez-vous conservé les épisodes téléchargés en local (/home/Animes/) ?"
   );
 
   // Demande à l'utilisateur s'il veut avoir les tléchargements envoyés sur MEGA
   let sendToMega = true;
   if (saveLocally) {
     sendToMega = await Confirm(
-      "Voulez-vous envoyés vos épisodes sur votre compte Mega ?",
-      (def = "no")
+      "Voulez-vous envoyés vos épisodes sur votre compte Mega ?"
     );
   }
 
@@ -106,21 +104,19 @@ import gradient from "gradient-string";
     }
 
     // Configure mega-cmd
-    if (megaMail && megaPsw) {
-      console.log("Configuration de votre compte mega...");
+    console.log("Configuration de votre compte mega...");
 
-      try {
-        execSync(`mega-login ${megaMail} ${megaPsw}`, {
-          shell: "/bin/bash",
-          stdio: "inherit",
-        });
-        console.log("Configuration réussie de votre compte mega.");
-      } catch (error) {
-        console.error(
-          "Erreur lors de la configuration de mega-cmd :",
-          error.message
-        );
-      }
+    try {
+      execSync(`mega-login ${megaMail} ${megaPsw}`, {
+        shell: "/bin/bash",
+        stdio: "inherit",
+      });
+      console.log("Configuration réussie de votre compte mega.");
+    } catch (error) {
+      console.error(
+        "Erreur lors de la configuration de mega-cmd :",
+        error.message
+      );
     }
   }
 
