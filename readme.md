@@ -9,7 +9,9 @@ Anime Fetcher est un programme de téléchargement d'animés utilisant Puppeteer
 Avant de commencer, assurez-vous d'avoir les éléments suivants installés sur votre machine :
 
 - **Docker**
-- **Docker Buildx**
+- **Docker Buildx** (nécessaire uniquement pour les systèmes Linux)
+
+   > **Note** : Si vous utilisez un autre système d'exploitation (comme Windows ou macOS), Docker Buildx n'est pas obligatoire pour la création des images.
 
 ## Installation
 
@@ -39,9 +41,11 @@ Avant de commencer, assurez-vous d'avoir les éléments suivants installés sur 
    ./build-docker.sh
    ```
 
-   Ce script utilise Docker Buildx pour créer l'image avec le tag `anime-fetcher-docker:latest`.
+   Ce script utilise Docker Buildx pour créer l'image avec le tag `anime-fetcher-docker:latest`. 
 
-   > **Remarque :** Si vous souhaitez exporter cette image Docker après l'avoir construite, utilisez le script `./export-docker.sh`.
+   > **Remarque pour les utilisateurs Linux** : Docker Buildx est nécessaire pour créer l'image sur Linux. Pour les autres systèmes, Docker Buildx n'est pas requis.
+
+   > **Remarque supplémentaire** : Si vous souhaitez exporter cette image Docker après l'avoir construite, utilisez le script `./export-docker.sh`.
 
 ## Utilisation
 
