@@ -1,3 +1,5 @@
+---
+
 # Anime Fetcher
 
 Anime Fetcher est un programme de téléchargement d'animés utilisant Puppeteer pour récupérer les épisodes depuis le site [anime-sama.fr](https://anime-sama.fr) et Mega pour stocker les fichiers.
@@ -39,9 +41,19 @@ Avant de commencer, assurez-vous d'avoir les éléments suivants installés sur 
 
    Ce script utilise Docker Buildx pour créer l'image avec le tag `anime-fetcher-docker:latest`.
 
+   > **Remarque :** Si vous souhaitez exporter cette image Docker après l'avoir construite, utilisez le script `./export-docker.sh`.
+
 ## Utilisation
 
-1. **Lancer le conteneur Docker :**
+1. **Importer une image Docker existante (facultatif) :**
+
+   Si vous disposez déjà d'une image Docker exportée, vous pouvez l'importer avant de lancer le programme. Utilisez le script `./import-docker.sh` pour charger l'image exportée :
+
+   ```bash
+   ./import-docker.sh
+   ```
+
+2. **Lancer le conteneur Docker :**
 
    Avant de lancer le conteneur, assurez-vous que le fichier de configuration `infos.jsonc` est présent. Utilisez le script `launch-docker.sh` pour démarrer le conteneur :
 
@@ -51,7 +63,7 @@ Avant de commencer, assurez-vous d'avoir les éléments suivants installés sur 
 
    Ce script vérifie la présence du répertoire local pour les épisodes (`~/Animes`) et du fichier de configuration. Il montera ces éléments dans le conteneur et exécutera le programme.
 
-2. **Interaction avec le programme :**
+3. **Interaction avec le programme :**
 
    Le programme vous guidera à travers les étapes suivantes :
 
@@ -64,3 +76,5 @@ Avant de commencer, assurez-vous d'avoir les éléments suivants installés sur 
 ## Licence
 
 Ce projet est sous licence [MIT](https://opensource.org/licenses/MIT).
+
+---
