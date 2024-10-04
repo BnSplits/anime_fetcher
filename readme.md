@@ -74,7 +74,7 @@ Avant de commencer, assurez-vous d'avoir les éléments suivants installés sur 
    Sur Windows, le dossier `$HOME/Animes/` n'existe pas nativement. Assurez-vous de définir un chemin valide pour stocker les épisodes en modifiant le script ou en utilisant un chemin tel que `C:/Users/[VotreUtilisateur]/Animes/` lorsque vous exécutez le conteneur. Par exemple, vous pouvez monter un répertoire spécifique dans le conteneur comme suit :
 
    ```bash
-   docker run -v C:/Users/[VotreUtilisateur]/Animes:/root/Animes ...
+   docker run -it --rm -v "C:/Users/[VotreUtilisateur]/Animes:/app/src/Animes ..."
    ```
 
    Cela permettra de créer le dossier nécessaire pour les téléchargements sur un système Windows.
