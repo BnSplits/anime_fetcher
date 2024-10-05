@@ -92,5 +92,4 @@ Avant de commencer, assurez-vous d'avoir les éléments suivants installés sur 
 Ce projet est sous licence [MIT](https://opensource.org/licenses/MIT).
 
 ---
-3. Cela clarifie la distinction entre les systèmes Linux/macOS et Windows pour la gestion des chemins d'accès et de stockage des épisodes.
 
