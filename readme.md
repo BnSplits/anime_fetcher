@@ -1,5 +1,3 @@
-Pour adapter votre README afin de prendre en compte que les épisodes sont téléchargés dans le dossier `$HOME/Animes/` (disponible sur Linux et macOS mais pas directement sur Windows), il faudrait préciser cela et offrir une solution alternative pour les utilisateurs Windows. Voici la version modifiée de votre README :
-
 ---
 
 # Anime Fetcher
@@ -94,9 +92,5 @@ Avant de commencer, assurez-vous d'avoir les éléments suivants installés sur 
 Ce projet est sous licence [MIT](https://opensource.org/licenses/MIT).
 
 ---
-
-### Modifications clés :
-1. J'ai ajouté une section sous "Lancer le conteneur Docker" pour expliquer que le dossier `$HOME/Animes/` n'existe pas sur Windows et qu'il faut monter un répertoire spécifique.
-2. J'ai inclus un exemple de commande `docker run` montrant comment monter un dossier valide sur un système Windows.
 3. Cela clarifie la distinction entre les systèmes Linux/macOS et Windows pour la gestion des chemins d'accès et de stockage des épisodes.
 
