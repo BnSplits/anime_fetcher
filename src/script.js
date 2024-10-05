@@ -415,7 +415,7 @@ import gradient from "gradient-string";
         `/app/src/Animes/${animeTitle}/${animeSeason}/${lang}`
       );
       fs.mkdirSync(animeFolderPath, { recursive: true });
-
+      
       let checkIfFileExistsOnMega;
       if (sendToMega) {
         // Crée le dossier de l'animé s'il n'existe pas sur Mega

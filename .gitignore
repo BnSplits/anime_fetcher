@@ -1,5 +1,5 @@
 src/node_modules
 src/Animes
 src/package-lock.json
-src/yarn.lock
 anime-fetcher-docker.tar
+infos.jsonc

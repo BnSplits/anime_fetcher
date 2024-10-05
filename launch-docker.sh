@@ -23,3 +23,8 @@ fi
 
 # Exécution de docker avec montage du fichier de configuration
 docker run -it --rm -v "$ANIMES_DIR:/app/src/Animes" -v "$CONFIG_FILE:/app/infos.jsonc" anime-fetcher-docker:latest
+
+# Donner les droits appropriés au répertoire des animes
+echo "Modification des droits sur le répertoire $ANIMES_DIR..."
+sudo chown -R $USER:$(id -gn) "$ANIMES_DIR"
+echo "Droits modifiés avec succès pour $ANIMES_DIR."
