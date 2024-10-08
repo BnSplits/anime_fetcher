@@ -8,6 +8,7 @@ RUN pacman -Syu --noconfirm
 RUN pacman -S --noconfirm nodejs-lts-iron wget npm aria2 nss atk libcups libxss mesa alsa-lib pango cairo gtk3 \
     && pacman -Scc --noconfirm
 
+# Installe megacmd
 RUN wget https://mega.nz/linux/repo/Arch_Extra/x86_64/megacmd-x86_64.pkg.tar.zst && pacman -U --noconfirm "$PWD/megacmd-x86_64.pkg.tar.zst"
 
 # Définit le répertoire de travail à l'intérieur du conteneur
@@ -21,9 +22,6 @@ RUN npm install --prefix ./src
 
 # Copie le reste des fichiers du projet dans le conteneur
 COPY . .
-
-# Installe le package .pkg.tar.zst
-# RUN pacman -U --noconfirm /app/src/megacmd-1.7.0-8-x86_64.pkg.tar.zst
 
 # Définit la commande à exécuter quand le conteneur démarre
 CMD ["node", "./src/script.js"]
