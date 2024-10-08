@@ -5,8 +5,10 @@ FROM archlinux:latest
 RUN pacman -Syu --noconfirm
 
 # Installe Node.js LTS Iron, npm, Puppeteer et les dépendances système requises
-RUN pacman -S --noconfirm nodejs-lts-iron npm aria2 nss atk libcups libxss mesa alsa-lib pango cairo gtk3 \
+RUN pacman -S --noconfirm nodejs-lts-iron wget npm aria2 nss atk libcups libxss mesa alsa-lib pango cairo gtk3 \
     && pacman -Scc --noconfirm
+
+RUN wget https://mega.nz/linux/repo/Arch_Extra/x86_64/megacmd-x86_64.pkg.tar.zst && pacman -U --noconfirm "$PWD/megacmd-x86_64.pkg.tar.zst"
 
 # Définit le répertoire de travail à l'intérieur du conteneur
 WORKDIR /app
@@ -21,7 +23,7 @@ RUN npm install --prefix ./src
 COPY . .
 
 # Installe le package .pkg.tar.zst
-RUN pacman -U --noconfirm /app/src/megacmd-1.7.0-8-x86_64.pkg.tar.zst
+# RUN pacman -U --noconfirm /app/src/megacmd-1.7.0-8-x86_64.pkg.tar.zst
 
 # Définit la commande à exécuter quand le conteneur démarre
 CMD ["node", "./src/script.js"]
