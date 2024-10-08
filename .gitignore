@@ -1,5 +1,6 @@
-src/node_modules
-src/Animes
+src/node_modules/
+src/Animes/
+Animes/
 src/package-lock.json
 anime-fetcher-docker.tar
 infos.jsonc
